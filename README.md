@@ -1,2 +1,2 @@
 # REAS
-Redes de Engrega de Aplicações e Serviços
+Redes de Entrega de Aplicações e Serviços
