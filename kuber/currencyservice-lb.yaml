@@ -1,0 +1,16 @@
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: currencyservice
+  namespace: default
+spec:
+  host: currencyservice
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_REQUEST # LEAST_CONN is deprecated in current Istio versions
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 50
+        maxRequestsPerConnection: 2
