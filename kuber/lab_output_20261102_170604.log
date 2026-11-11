@@ -1,0 +1,1317 @@
+=== REAS Kubernetes Lab ===
+Date: Mon Nov  2 17:06:08 UTC 2026
+Host: reas-g04.dyn.fil.isel.pt
+
+
+[0;32m═══ 1 · START CLUSTER ═══[0m
+
+$ minikube start --driver=docker --cpus=4 --memory=8192
+* minikube v1.39.0 on Ubuntu 24.04 (amd64)
+* Using the docker driver based on existing profile
+* Starting "minikube" primary control-plane node in "minikube" cluster
+* Pulling base image v0.0.51 ...
+* Preparing Kubernetes v1.37.0 on containerd 2.3.4 ...
+* Verifying Kubernetes components...
+  - Using image registry.k8s.io/metrics-server/metrics-server:v0.9.0
+  - Using image gcr.io/k8s-minikube/storage-provisioner:v5
+  - Using image registry.k8s.io/ingress-nginx/controller:v1.15.1
+  - Using image registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.9
+  - Using image registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.9
+* Verifying ingress addon...
+* Enabled addons: metrics-server, storage-provisioner, ingress, default-storageclass
+* Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default
+
+$ kubectl cluster-info
+Kubernetes control plane is running at https://192.168.49.2:8443
+CoreDNS is running at https://192.168.49.2:8443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+
+$ kubectl get nodes
+NAME       STATUS   ROLES           AGE   VERSION
+minikube   Ready    control-plane   53m   v1.37.0
+
+$ kubectl get pods -n kube-system
+NAME                               READY   STATUS    RESTARTS        AGE
+coredns-559f6c778d-822rd           1/1     Running   1 (8m50s ago)   53m
+etcd-minikube                      1/1     Running   1 (8m50s ago)   53m
+kindnet-ftnsz                      1/1     Running   1 (8m50s ago)   53m
+kube-apiserver-minikube            1/1     Running   1 (8m50s ago)   53m
+kube-controller-manager-minikube   1/1     Running   1 (8m50s ago)   53m
+kube-proxy-wst5c                   1/1     Running   1 (8m50s ago)   53m
+kube-scheduler-minikube            1/1     Running   1 (8m50s ago)   53m
+metrics-server-768f9f6999-xk7ct    1/1     Running   0               6m43s
+storage-provisioner                1/1     Running   2 (8m11s ago)   53m
+
+[0;32m═══ 2 · DEPLOY GOOGLE ONLINE BOUTIQUE ═══[0m
+  (git clone skipped – directory exists)
+
+$ kubectl apply -f /home/student/REAS/kuber/microservices-demo/release/kubernetes-manifests.yaml
+deployment.apps/currencyservice unchanged
+service/currencyservice unchanged
+serviceaccount/currencyservice unchanged
+deployment.apps/loadgenerator unchanged
+serviceaccount/loadgenerator unchanged
+deployment.apps/productcatalogservice unchanged
+service/productcatalogservice unchanged
+serviceaccount/productcatalogservice unchanged
+deployment.apps/checkoutservice unchanged
+service/checkoutservice unchanged
+serviceaccount/checkoutservice unchanged
+deployment.apps/shippingservice unchanged
+service/shippingservice unchanged
+serviceaccount/shippingservice unchanged
+deployment.apps/cartservice unchanged
+service/cartservice unchanged
+serviceaccount/cartservice unchanged
+deployment.apps/redis-cart unchanged
+service/redis-cart unchanged
+deployment.apps/emailservice unchanged
+service/emailservice unchanged
+serviceaccount/emailservice unchanged
+deployment.apps/paymentservice unchanged
+service/paymentservice unchanged
+serviceaccount/paymentservice unchanged
+deployment.apps/frontend unchanged
+service/frontend unchanged
+service/frontend-external unchanged
+serviceaccount/frontend unchanged
+deployment.apps/recommendationservice unchanged
+service/recommendationservice unchanged
+serviceaccount/recommendationservice unchanged
+deployment.apps/adservice unchanged
+service/adservice unchanged
+serviceaccount/adservice unchanged
+
+$ kubectl wait --for=condition=ready pod --all --timeout=300s
+pod/adservice-957f96f7d-bn4wx condition met
+pod/cartservice-58b95597cf-2fvxl condition met
+pod/checkoutservice-687c78c598-s47pg condition met
+pod/currencyservice-d49b9844d-nwqhq condition met
+pod/emailservice-796765984-d8qbd condition met
+pod/frontend-7f5f76b5ff-5x8q5 condition met
+pod/loadgenerator-74c4986859-vdgc9 condition met
+pod/paymentservice-66b7c67bd4-bhjh5 condition met
+pod/productcatalogservice-67849487f4-9jj55 condition met
+pod/recommendationservice-76558856fb-8jg9m condition met
+pod/redis-cart-6fdc7894b7-krbvd condition met
+pod/shippingservice-799854c9b8-7k2vh condition met
+
+$ kubectl get pods
+NAME                                     READY   STATUS    RESTARTS        AGE
+adservice-957f96f7d-bn4wx                1/1     Running   1 (8m57s ago)   53m
+cartservice-58b95597cf-2fvxl             1/1     Running   1 (8m57s ago)   53m
+checkoutservice-687c78c598-s47pg         1/1     Running   1 (8m57s ago)   53m
+currencyservice-d49b9844d-nwqhq          1/1     Running   1 (8m57s ago)   53m
+emailservice-796765984-d8qbd             1/1     Running   1 (8m57s ago)   53m
+frontend-7f5f76b5ff-5x8q5                1/1     Running   1 (8m57s ago)   53m
+loadgenerator-74c4986859-vdgc9           1/1     Running   1 (8m57s ago)   53m
+paymentservice-66b7c67bd4-bhjh5          1/1     Running   1 (8m57s ago)   53m
+productcatalogservice-67849487f4-9jj55   1/1     Running   1 (8m57s ago)   53m
+recommendationservice-76558856fb-8jg9m   1/1     Running   1 (8m57s ago)   53m
+redis-cart-6fdc7894b7-krbvd              1/1     Running   1 (8m57s ago)   53m
+shippingservice-799854c9b8-7k2vh         1/1     Running   1 (8m57s ago)   53m
+
+$ kubectl get services
+NAME                    TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+adservice               ClusterIP      10.99.134.205    <none>        9555/TCP       53m
+cartservice             ClusterIP      10.109.113.137   <none>        7070/TCP       53m
+checkoutservice         ClusterIP      10.107.63.188    <none>        5050/TCP       53m
+currencyservice         ClusterIP      10.101.6.119     <none>        7000/TCP       53m
+emailservice            ClusterIP      10.106.183.137   <none>        5000/TCP       53m
+frontend                ClusterIP      10.99.21.211     <none>        80/TCP         53m
+frontend-external       LoadBalancer   10.108.209.86    <pending>     80:31028/TCP   53m
+kubernetes              ClusterIP      10.96.0.1        <none>        443/TCP        53m
+paymentservice          ClusterIP      10.107.68.131    <none>        50051/TCP      53m
+productcatalogservice   ClusterIP      10.110.139.60    <none>        3550/TCP       53m
+recommendationservice   ClusterIP      10.106.45.176    <none>        8080/TCP       53m
+redis-cart              ClusterIP      10.111.1.177     <none>        6379/TCP       53m
+shippingservice         ClusterIP      10.103.253.198   <none>        50051/TCP      53m
+
+$ minikube service frontend-external
+┌───────────┬───────────────────┬─────────────┬───────────────────────────┐
+│ NAMESPACE │       NAME        │ TARGET PORT │            URL            │
+├───────────┼───────────────────┼─────────────┼───────────────────────────┤
+│ default   │ frontend-external │ http/80     │ http://192.168.49.2:31028 │
+└───────────┴───────────────────┴─────────────┴───────────────────────────┘
+* Opening service default/frontend-external in default browser...
+  http://192.168.49.2:31028
+
+[0;32m═══ 3 · EXPLORE DEPLOYMENT ═══[0m
+
+$ kubectl get pods -o wide
+NAME                                     READY   STATUS    RESTARTS       AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+adservice-957f96f7d-bn4wx                1/1     Running   1 (9m4s ago)   53m   10.244.0.3    minikube   <none>           <none>
+cartservice-58b95597cf-2fvxl             1/1     Running   1 (9m4s ago)   53m   10.244.0.6    minikube   <none>           <none>
+checkoutservice-687c78c598-s47pg         1/1     Running   1 (9m4s ago)   53m   10.244.0.4    minikube   <none>           <none>
+currencyservice-d49b9844d-nwqhq          1/1     Running   1 (9m4s ago)   53m   10.244.0.9    minikube   <none>           <none>
+emailservice-796765984-d8qbd             1/1     Running   1 (9m4s ago)   53m   10.244.0.13   minikube   <none>           <none>
+frontend-7f5f76b5ff-5x8q5                1/1     Running   1 (9m4s ago)   53m   10.244.0.15   minikube   <none>           <none>
+loadgenerator-74c4986859-vdgc9           1/1     Running   1 (9m4s ago)   53m   10.244.0.14   minikube   <none>           <none>
+paymentservice-66b7c67bd4-bhjh5          1/1     Running   1 (9m4s ago)   53m   10.244.0.2    minikube   <none>           <none>
+productcatalogservice-67849487f4-9jj55   1/1     Running   1 (9m4s ago)   53m   10.244.0.8    minikube   <none>           <none>
+recommendationservice-76558856fb-8jg9m   1/1     Running   1 (9m4s ago)   53m   10.244.0.5    minikube   <none>           <none>
+redis-cart-6fdc7894b7-krbvd              1/1     Running   1 (9m4s ago)   53m   10.244.0.10   minikube   <none>           <none>
+shippingservice-799854c9b8-7k2vh         1/1     Running   1 (9m4s ago)   53m   10.244.0.11   minikube   <none>           <none>
+
+$ kubectl get deployment currencyservice -o yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"currencyservice"},"name":"currencyservice","namespace":"default"},"spec":{"selector":{"matchLabels":{"app":"currencyservice"}},"template":{"metadata":{"labels":{"app":"currencyservice"}},"spec":{"containers":[{"env":[{"name":"PORT","value":"7000"},{"name":"DISABLE_PROFILER","value":"1"}],"image":"us-central1-docker.pkg.dev/google-samples/microservices-demo/currencyservice:v0.10.4","livenessProbe":{"grpc":{"port":7000}},"name":"server","ports":[{"containerPort":7000,"name":"grpc"}],"readinessProbe":{"grpc":{"port":7000}},"resources":{"limits":{"cpu":"200m","memory":"128Mi"},"requests":{"cpu":"100m","memory":"64Mi"}},"securityContext":{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"privileged":false,"readOnlyRootFilesystem":true}}],"securityContext":{"fsGroup":1000,"runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000},"serviceAccountName":"currencyservice","terminationGracePeriodSeconds":5}}}}
+  creationTimestamp: "2026-11-02T16:13:29Z"
+  generation: 1
+  labels:
+    app: currencyservice
+  name: currencyservice
+  namespace: default
+  resourceVersion: "2883"
+  uid: be9afacf-b496-454d-ac11-6f5b79edf6bd
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: currencyservice
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: currencyservice
+    spec:
+      containers:
+      - env:
+        - name: PORT
+          value: "7000"
+        - name: DISABLE_PROFILER
+          value: "1"
+        image: us-central1-docker.pkg.dev/google-samples/microservices-demo/currencyservice:v0.10.4
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          grpc:
+            port: 7000
+            service: ""
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: server
+        ports:
+        - containerPort: 7000
+          name: grpc
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          grpc:
+            port: 7000
+            service: ""
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: 200m
+            memory: 128Mi
+          requests:
+            cpu: 100m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      serviceAccount: currencyservice
+      serviceAccountName: currencyservice
+      terminationGracePeriodSeconds: 5
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2026-11-02T16:13:29Z"
+    lastUpdateTime: "2026-11-02T16:13:55Z"
+    message: ReplicaSet "currencyservice-d49b9844d" has successfully progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  - lastTransitionTime: "2026-11-02T16:58:14Z"
+    lastUpdateTime: "2026-11-02T16:58:14Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  observedGeneration: 1
+  readyReplicas: 1
+  replicas: 1
+  terminatingReplicas: 0
+  updatedReplicas: 1
+
+$ kubectl get deployment currencyservice -o jsonpath='{.spec.replicas}'
+1
+$ kubectl get deployment currencyservice -o jsonpath='{.spec.template.spec.containers[0].resources}' | jq
+{
+  "limits": {
+    "cpu": "200m",
+    "memory": "128Mi"
+  },
+  "requests": {
+    "cpu": "100m",
+    "memory": "64Mi"
+  }
+}
+
+$ kubectl get deployment currencyservice -o jsonpath='{.spec.template.spec.containers[0].image}'
+us-central1-docker.pkg.dev/google-samples/microservices-demo/currencyservice:v0.10.4
+$ kubectl get service frontend -o yaml
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"frontend"},"name":"frontend","namespace":"default"},"spec":{"ports":[{"name":"http","port":80,"targetPort":8080}],"selector":{"app":"frontend"},"type":"ClusterIP"}}
+  creationTimestamp: "2026-11-02T16:13:29Z"
+  labels:
+    app: frontend
+  name: frontend
+  namespace: default
+  resourceVersion: "620"
+  uid: a185105e-9105-4418-a0b8-355300cd85b5
+spec:
+  clusterIP: 10.99.21.211
+  clusterIPs:
+  - 10.99.21.211
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: frontend
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
+
+$ kubectl describe service frontend
+Name:                     frontend
+Namespace:                default
+Labels:                   app=frontend
+Annotations:              <none>
+Selector:                 app=frontend
+Type:                     ClusterIP
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.99.21.211
+IPs:                      10.99.21.211
+Port:                     http  80/TCP
+TargetPort:               8080/TCP
+Endpoints:                10.244.0.15:8080
+Session Affinity:         None
+Internal Traffic Policy:  Cluster
+Events:                   <none>
+
+[0;32m═══ 4 · EXTERNAL ACCESS — INGRESS ═══[0m
+
+$ minikube addons enable ingress
+* ingress is an addon maintained by Kubernetes. For any concerns contact minikube on GitHub.
+You can view the list of minikube maintainers at: https://github.com/kubernetes/minikube/blob/master/OWNERS
+  - Using image registry.k8s.io/ingress-nginx/controller:v1.15.1
+  - Using image registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.9
+  - Using image registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.9
+* Verifying ingress addon...
+* The 'ingress' addon is enabled
+  (boutique-ingress.yaml written for host: reas-g04.dyn.fil.isel.pt)
+
+$ kubectl apply -f boutique-ingress.yaml
+ingress.networking.k8s.io/boutique-ingress unchanged
+
+$ kubectl describe ingress boutique-ingress
+Name:             boutique-ingress
+Labels:           <none>
+Namespace:        default
+Address:          192.168.49.2
+Ingress Class:    nginx
+Default backend:  <default>
+Rules:
+  Host                      Path  Backends
+  ----                      ----  --------
+  reas-g04.dyn.fil.isel.pt  
+                            /   frontend:80 (10.244.0.15:8080)
+Annotations:                nginx.ingress.kubernetes.io/proxy-body-size: 50m
+                            nginx.ingress.kubernetes.io/proxy-read-timeout: 600
+                            nginx.ingress.kubernetes.io/proxy-send-timeout: 600
+Events:
+  Type    Reason  Age                    From                      Message
+  ----    ------  ----                   ----                      -------
+  Normal  Sync    34m (x2 over 35m)      nginx-ingress-controller  Scheduled for sync
+  Normal  Sync    7m28s (x3 over 8m28s)  nginx-ingress-controller  Scheduled for sync
+
+$ kubectl get svc -n ingress-nginx
+NAME                                 TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+ingress-nginx-controller             NodePort    10.103.103.59    <none>        80:32554/TCP,443:30306/TCP   36m
+ingress-nginx-controller-admission   ClusterIP   10.104.102.193   <none>        443/TCP                      36m
+
+$ minikube ip
+192.168.49.2
+
+$ sudo iptables -t nat -I PREROUTING 1 -p tcp --dport 80 -j DNAT --to-destination 192.168.49.2:80
+
+$ sudo iptables -I FORWARD 1 -p tcp -d 192.168.49.2 --dport 80 -j ACCEPT
+
+$ sudo sh -c 'echo 1 > /proc/sys/net/ipv4/ip_forward'
+
+$ sudo apt install -y iptables-persistent
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+Reading package lists...
+Building dependency tree...
+Reading state information...
+iptables-persistent is already the newest version (1.0.20).
+0 upgraded, 0 newly installed, 0 to remove and 28 not upgraded.
+
+$ sudo netfilter-persistent save
+run-parts: executing /usr/share/netfilter-persistent/plugins.d/15-ip4tables save
+run-parts: executing /usr/share/netfilter-persistent/plugins.d/25-ip6tables save
+
+[0;32m═══ 5 · METRICS AND MONITORING ═══[0m
+
+$ minikube addons enable metrics-server
+* metrics-server is an addon maintained by Kubernetes. For any concerns contact minikube on GitHub.
+You can view the list of minikube maintainers at: https://github.com/kubernetes/minikube/blob/master/OWNERS
+  - Using image registry.k8s.io/metrics-server/metrics-server:v0.9.0
+* The 'metrics-server' addon is enabled
+  (metrics-server ready)
+
+$ kubectl top nodes
+NAME       CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)   
+minikube   520m         13%      2122Mi          13%         
+
+$ kubectl top pods
+NAME                                     CPU(cores)   MEMORY(bytes)   
+adservice-957f96f7d-bn4wx                14m          123Mi           
+cartservice-58b95597cf-2fvxl             7m           73Mi            
+checkoutservice-687c78c598-s47pg         2m           22Mi            
+currencyservice-d49b9844d-nwqhq          12m          70Mi            
+emailservice-796765984-d8qbd             2m           67Mi            
+frontend-7f5f76b5ff-5x8q5                17m          27Mi            
+loadgenerator-74c4986859-vdgc9           5m           80Mi            
+paymentservice-66b7c67bd4-bhjh5          2m           67Mi            
+productcatalogservice-67849487f4-9jj55   8m           28Mi            
+recommendationservice-76558856fb-8jg9m   9m           66Mi            
+redis-cart-6fdc7894b7-krbvd              3m           30Mi            
+shippingservice-799854c9b8-7k2vh         2m           21Mi            
+
+$ kubectl describe node minikube
+Name:               minikube
+Roles:              control-plane
+Labels:             beta.kubernetes.io/arch=amd64
+                    beta.kubernetes.io/os=linux
+                    kubernetes.io/arch=amd64
+                    kubernetes.io/hostname=minikube
+                    kubernetes.io/os=linux
+                    minikube.k8s.io/commit=7a9f6a841470a207de8cf4bafcccee0969d8ba10
+                    minikube.k8s.io/name=minikube
+                    minikube.k8s.io/primary=true
+                    minikube.k8s.io/updated_at=2026_11_02T16_13_00_0700
+                    minikube.k8s.io/version=v1.39.0
+                    node-role.kubernetes.io/control-plane=
+                    node.kubernetes.io/exclude-from-external-load-balancers=
+Annotations:        node.alpha.kubernetes.io/ttl: 0
+                    volumes.kubernetes.io/controller-managed-attach-detach: true
+CreationTimestamp:  Mon, 02 Nov 2026 16:12:56 +0000
+Taints:             <none>
+Unschedulable:      false
+Lease:
+  HolderIdentity:  minikube
+  AcquireTime:     <unset>
+  RenewTime:       Mon, 02 Nov 2026 17:07:07 +0000
+Conditions:
+  Type             Status  LastHeartbeatTime                 LastTransitionTime                Reason                       Message
+  ----             ------  -----------------                 ------------------                ------                       -------
+  MemoryPressure   False   Mon, 02 Nov 2026 17:06:05 +0000   Mon, 02 Nov 2026 16:12:54 +0000   KubeletHasSufficientMemory   kubelet has sufficient memory available
+  DiskPressure     False   Mon, 02 Nov 2026 17:06:05 +0000   Mon, 02 Nov 2026 16:12:54 +0000   KubeletHasNoDiskPressure     kubelet has no disk pressure
+  PIDPressure      False   Mon, 02 Nov 2026 17:06:05 +0000   Mon, 02 Nov 2026 16:12:54 +0000   KubeletHasSufficientPID      kubelet has sufficient PID available
+  Ready            True    Mon, 02 Nov 2026 17:06:05 +0000   Mon, 02 Nov 2026 16:13:20 +0000   KubeletReady                 kubelet is posting ready status
+Addresses:
+  InternalIP:  192.168.49.2
+  Hostname:    minikube
+Capacity:
+  cpu:                4
+  ephemeral-storage:  38727483392
+  hugepages-2Mi:      0
+  memory:             16344952Ki
+  pods:               110
+Allocatable:
+  cpu:                4
+  ephemeral-storage:  38727483392
+  hugepages-2Mi:      0
+  memory:             16344952Ki
+  pods:               110
+System Info:
+  Machine ID:                 b7566eefbea02b7ce85821e86a97158b
+  System UUID:                90b2af97-a2a9-4dbc-8dec-2ac1469fe882
+  Boot ID:                    7c6e8d2b-9540-445e-abe8-0043199d13f4
+  Kernel Version:             6.8.0-147-generic
+  OS Image:                   Debian GNU/Linux 12 (bookworm)
+  Operating System:           linux
+  Architecture:               amd64
+  Container Runtime Version:  containerd://2.3.4
+  Kubelet Version:            v1.37.0
+PodCIDR:                      10.244.0.0/24
+PodCIDRs:                     10.244.0.0/24
+Non-terminated Pods:          (22 in total)
+  Namespace                   Name                                        CPU Requests  CPU Limits  Memory Requests  Memory Limits  Age
+  ---------                   ----                                        ------------  ----------  ---------------  -------------  ---
+  default                     adservice-957f96f7d-bn4wx                   200m (5%)     300m (7%)   180Mi (1%)       300Mi (1%)     53m
+  default                     cartservice-58b95597cf-2fvxl                200m (5%)     300m (7%)   64Mi (0%)        128Mi (0%)     53m
+  default                     checkoutservice-687c78c598-s47pg            100m (2%)     200m (5%)   64Mi (0%)        128Mi (0%)     53m
+  default                     currencyservice-d49b9844d-nwqhq             100m (2%)     200m (5%)   64Mi (0%)        128Mi (0%)     53m
+  default                     emailservice-796765984-d8qbd                100m (2%)     200m (5%)   64Mi (0%)        128Mi (0%)     53m
+  default                     frontend-7f5f76b5ff-5x8q5                   100m (2%)     200m (5%)   64Mi (0%)        128Mi (0%)     53m
+  default                     loadgenerator-74c4986859-vdgc9              300m (7%)     500m (12%)  256Mi (1%)       512Mi (3%)     53m
+  default                     paymentservice-66b7c67bd4-bhjh5             100m (2%)     200m (5%)   64Mi (0%)        128Mi (0%)     53m
+  default                     productcatalogservice-67849487f4-9jj55      100m (2%)     200m (5%)   64Mi (0%)        128Mi (0%)     53m
+  default                     recommendationservice-76558856fb-8jg9m      100m (2%)     200m (5%)   220Mi (1%)       450Mi (2%)     53m
+  default                     redis-cart-6fdc7894b7-krbvd                 70m (1%)      125m (3%)   200Mi (1%)       256Mi (1%)     53m
+  default                     shippingservice-799854c9b8-7k2vh            100m (2%)     200m (5%)   64Mi (0%)        128Mi (0%)     53m
+  ingress-nginx               ingress-nginx-controller-d7cd8c989-ghk22    100m (2%)     0 (0%)      90Mi (0%)        0 (0%)         36m
+  kube-system                 coredns-559f6c778d-822rd                    100m (2%)     0 (0%)      70Mi (0%)        170Mi (1%)     54m
+  kube-system                 etcd-minikube                               100m (2%)     0 (0%)      100Mi (0%)       0 (0%)         54m
+  kube-system                 kindnet-ftnsz                               100m (2%)     100m (2%)   50Mi (0%)        50Mi (0%)      54m
+  kube-system                 kube-apiserver-minikube                     250m (6%)     0 (0%)      0 (0%)           0 (0%)         54m
+  kube-system                 kube-controller-manager-minikube            200m (5%)     0 (0%)      0 (0%)           0 (0%)         54m
+  kube-system                 kube-proxy-wst5c                            0 (0%)        0 (0%)      0 (0%)           0 (0%)         54m
+  kube-system                 kube-scheduler-minikube                     100m (2%)     0 (0%)      0 (0%)           0 (0%)         54m
+  kube-system                 metrics-server-768f9f6999-xk7ct             100m (2%)     0 (0%)      200Mi (1%)       0 (0%)         7m17s
+  kube-system                 storage-provisioner                         0 (0%)        0 (0%)      0 (0%)           0 (0%)         54m
+Allocated resources:
+  (Total limits may be over 100 percent, i.e., overcommitted.)
+  Resource           Requests      Limits
+  --------           --------      ------
+  cpu                2620m (65%)   2925m (73%)
+  memory             1878Mi (11%)  2762Mi (17%)
+  ephemeral-storage  0 (0%)        0 (0%)
+  hugepages-2Mi      0 (0%)        0 (0%)
+Events:
+  Type     Reason                   Age    From             Message
+  ----     ------                   ----   ----             -------
+  Normal   NodeHasSufficientMemory  54m    kubelet          Node minikube status is now: NodeHasSufficientMemory
+  Normal   NodeHasNoDiskPressure    54m    kubelet          Node minikube status is now: NodeHasNoDiskPressure
+  Normal   NodeHasSufficientPID     54m    kubelet          Node minikube status is now: NodeHasSufficientPID
+  Normal   RegisteredNode           54m    node-controller  Node minikube event: Registered Node minikube in Controller
+  Normal   NodeReady                53m    kubelet          Node minikube status is now: NodeReady
+  Warning  Rebooted                 9m16s  kubelet          Node minikube has been rebooted, boot id: 7c6e8d2b-9540-445e-abe8-0043199d13f4
+  Normal   RegisteredNode           9m13s  node-controller  Node minikube event: Registered Node minikube in Controller
+
+$ kubectl get events --sort-by='.lastTimestamp'
+LAST SEEN   TYPE      REASON                    OBJECT                                        MESSAGE
+54m         Normal    Starting                  node/minikube                                 
+9m12s       Normal    Starting                  node/minikube                                 
+54m         Normal    NodeAllocatableEnforced   node/minikube                                 Updated Node Allocatable limit across pods
+54m         Normal    NodeHasSufficientMemory   node/minikube                                 Node minikube status is now: NodeHasSufficientMemory
+54m         Normal    NodeHasNoDiskPressure     node/minikube                                 Node minikube status is now: NodeHasNoDiskPressure
+54m         Normal    Starting                  node/minikube                                 Starting kubelet.
+54m         Normal    NodeHasSufficientPID      node/minikube                                 Node minikube status is now: NodeHasSufficientPID
+54m         Normal    NodeHasSufficientPID      node/minikube                                 Node minikube status is now: NodeHasSufficientPID
+54m         Normal    NodeAllocatableEnforced   node/minikube                                 Updated Node Allocatable limit across pods
+54m         Normal    NodeHasSufficientMemory   node/minikube                                 Node minikube status is now: NodeHasSufficientMemory
+54m         Normal    Starting                  node/minikube                                 Starting kubelet.
+54m         Normal    NodeHasNoDiskPressure     node/minikube                                 Node minikube status is now: NodeHasNoDiskPressure
+54m         Normal    RegisteredNode            node/minikube                                 Node minikube event: Registered Node minikube in Controller
+53m         Normal    NodeReady                 node/minikube                                 Node minikube status is now: NodeReady
+53m         Normal    SuccessfulCreate          replicaset/loadgenerator-74c4986859           Created pod: loadgenerator-74c4986859-vdgc9
+53m         Normal    Scheduled                 pod/loadgenerator-74c4986859-vdgc9            Successfully assigned default/loadgenerator-74c4986859-vdgc9 to minikube
+53m         Warning   FailedCreate              replicaset/productcatalogservice-67849487f4   Error creating: pods "productcatalogservice-67849487f4-" is forbidden: error looking up service account default/productcatalogservice: serviceaccount "productcatalogservice" not found
+53m         Normal    SuccessfulCreate          replicaset/productcatalogservice-67849487f4   Created pod: productcatalogservice-67849487f4-9jj55
+53m         Normal    ScalingReplicaSet         deployment/productcatalogservice              Scaled up replica set productcatalogservice-67849487f4 from 0 to 1
+53m         Normal    Scheduled                 pod/productcatalogservice-67849487f4-9jj55    Successfully assigned default/productcatalogservice-67849487f4-9jj55 to minikube
+53m         Normal    ScalingReplicaSet         deployment/paymentservice                     Scaled up replica set paymentservice-66b7c67bd4 from 0 to 1
+53m         Warning   FailedCreate              replicaset/shippingservice-799854c9b8         Error creating: pods "shippingservice-799854c9b8-" is forbidden: error looking up service account default/shippingservice: serviceaccount "shippingservice" not found
+53m         Normal    ScalingReplicaSet         deployment/frontend                           Scaled up replica set frontend-7f5f76b5ff from 0 to 1
+53m         Normal    SuccessfulCreate          replicaset/paymentservice-66b7c67bd4          Created pod: paymentservice-66b7c67bd4-bhjh5
+53m         Normal    SuccessfulCreate          replicaset/shippingservice-799854c9b8         Created pod: shippingservice-799854c9b8-7k2vh
+53m         Normal    ScalingReplicaSet         deployment/shippingservice                    Scaled up replica set shippingservice-799854c9b8 from 0 to 1
+53m         Normal    Scheduled                 pod/redis-cart-6fdc7894b7-krbvd               Successfully assigned default/redis-cart-6fdc7894b7-krbvd to minikube
+53m         Warning   FailedCreate              replicaset/cartservice-58b95597cf             Error creating: pods "cartservice-58b95597cf-" is forbidden: error looking up service account default/cartservice: serviceaccount "cartservice" not found
+53m         Normal    SuccessfulCreate          replicaset/cartservice-58b95597cf             Created pod: cartservice-58b95597cf-2fvxl
+53m         Normal    ScalingReplicaSet         deployment/cartservice                        Scaled up replica set cartservice-58b95597cf from 0 to 1
+53m         Normal    Scheduled                 pod/checkoutservice-687c78c598-s47pg          Successfully assigned default/checkoutservice-687c78c598-s47pg to minikube
+53m         Normal    Scheduled                 pod/cartservice-58b95597cf-2fvxl              Successfully assigned default/cartservice-58b95597cf-2fvxl to minikube
+53m         Normal    Pulling                   pod/loadgenerator-74c4986859-vdgc9            Pulling image "busybox:latest"
+53m         Normal    ScalingReplicaSet         deployment/emailservice                       Scaled up replica set emailservice-796765984 from 0 to 1
+53m         Normal    SuccessfulCreate          replicaset/emailservice-796765984             Created pod: emailservice-796765984-d8qbd
+53m         Normal    SuccessfulCreate          replicaset/redis-cart-6fdc7894b7              Created pod: redis-cart-6fdc7894b7-krbvd
+53m         Normal    ScalingReplicaSet         deployment/redis-cart                         Scaled up replica set redis-cart-6fdc7894b7 from 0 to 1
+53m         Normal    Scheduled                 pod/paymentservice-66b7c67bd4-bhjh5           Successfully assigned default/paymentservice-66b7c67bd4-bhjh5 to minikube
+53m         Normal    Scheduled                 pod/shippingservice-799854c9b8-7k2vh          Successfully assigned default/shippingservice-799854c9b8-7k2vh to minikube
+53m         Normal    Scheduled                 pod/emailservice-796765984-d8qbd              Successfully assigned default/emailservice-796765984-d8qbd to minikube
+53m         Warning   FailedCreate              replicaset/checkoutservice-687c78c598         Error creating: pods "checkoutservice-687c78c598-" is forbidden: error looking up service account default/checkoutservice: serviceaccount "checkoutservice" not found
+53m         Normal    SuccessfulCreate          replicaset/checkoutservice-687c78c598         Created pod: checkoutservice-687c78c598-s47pg
+53m         Normal    ScalingReplicaSet         deployment/checkoutservice                    Scaled up replica set checkoutservice-687c78c598 from 0 to 1
+53m         Normal    Scheduled                 pod/currencyservice-d49b9844d-nwqhq           Successfully assigned default/currencyservice-d49b9844d-nwqhq to minikube
+53m         Normal    ScalingReplicaSet         deployment/currencyservice                    Scaled up replica set currencyservice-d49b9844d from 0 to 1
+53m         Normal    SuccessfulCreate          replicaset/currencyservice-d49b9844d          Created pod: currencyservice-d49b9844d-nwqhq
+53m         Warning   FailedCreate              replicaset/currencyservice-d49b9844d          Error creating: pods "currencyservice-d49b9844d-" is forbidden: error looking up service account default/currencyservice: serviceaccount "currencyservice" not found
+53m         Normal    ScalingReplicaSet         deployment/loadgenerator                      Scaled up replica set loadgenerator-74c4986859 from 0 to 1
+53m         Normal    Scheduled                 pod/frontend-7f5f76b5ff-5x8q5                 Successfully assigned default/frontend-7f5f76b5ff-5x8q5 to minikube
+53m         Normal    SuccessfulCreate          replicaset/frontend-7f5f76b5ff                Created pod: frontend-7f5f76b5ff-5x8q5
+53m         Normal    Pulling                   pod/cartservice-58b95597cf-2fvxl              Pulling image "us-central1-docker.pkg.dev/google-samples/microservices-demo/cartservice:v0.10.4"
+53m         Normal    Scheduled                 pod/recommendationservice-76558856fb-8jg9m    Successfully assigned default/recommendationservice-76558856fb-8jg9m to minikube
+53m         Normal    Pulling                   pod/productcatalogservice-67849487f4-9jj55    Pulling image "us-central1-docker.pkg.dev/google-samples/microservices-demo/productcatalogservice:v0.10.4"
+53m         Normal    Pulling                   pod/shippingservice-799854c9b8-7k2vh          Pulling image "us-central1-docker.pkg.dev/google-samples/microservices-demo/shippingservice:v0.10.4"
+53m         Normal    ScalingReplicaSet         deployment/adservice                          Scaled up replica set adservice-957f96f7d from 0 to 1
+53m         Normal    SuccessfulCreate          replicaset/adservice-957f96f7d                Created pod: adservice-957f96f7d-bn4wx
+53m         Normal    Pulling                   pod/currencyservice-d49b9844d-nwqhq           Pulling image "us-central1-docker.pkg.dev/google-samples/microservices-demo/currencyservice:v0.10.4"
+53m         Normal    Scheduled                 pod/adservice-957f96f7d-bn4wx                 Successfully assigned default/adservice-957f96f7d-bn4wx to minikube
+53m         Normal    Pulling                   pod/emailservice-796765984-d8qbd              Pulling image "us-central1-docker.pkg.dev/google-samples/microservices-demo/emailservice:v0.10.4"
+53m         Normal    SuccessfulCreate          replicaset/recommendationservice-76558856fb   Created pod: recommendationservice-76558856fb-8jg9m
+53m         Normal    ScalingReplicaSet         deployment/recommendationservice              Scaled up replica set recommendationservice-76558856fb from 0 to 1
+53m         Normal    Pulling                   pod/redis-cart-6fdc7894b7-krbvd               Pulling image "redis:alpine"
+53m         Normal    Pulling                   pod/checkoutservice-687c78c598-s47pg          Pulling image "us-central1-docker.pkg.dev/google-samples/microservices-demo/checkoutservice:v0.10.4"
+53m         Normal    Pulling                   pod/paymentservice-66b7c67bd4-bhjh5           Pulling image "us-central1-docker.pkg.dev/google-samples/microservices-demo/paymentservice:v0.10.4"
+53m         Normal    Pulling                   pod/frontend-7f5f76b5ff-5x8q5                 Pulling image "us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend:v0.10.4"
+53m         Normal    Created                   pod/loadgenerator-74c4986859-vdgc9            Container created
+53m         Normal    Pulling                   pod/recommendationservice-76558856fb-8jg9m    Pulling image "us-central1-docker.pkg.dev/google-samples/microservices-demo/recommendationservice:v0.10.4"
+53m         Normal    Pulling                   pod/adservice-957f96f7d-bn4wx                 Pulling image "us-central1-docker.pkg.dev/google-samples/microservices-demo/adservice:v0.10.4"
+53m         Normal    Pulled                    pod/loadgenerator-74c4986859-vdgc9            Successfully pulled image "busybox:latest" in 1.955s (1.955s including waiting). Image size: 2236767 bytes.
+53m         Normal    Started                   pod/loadgenerator-74c4986859-vdgc9            Container started
+53m         Normal    Started                   pod/currencyservice-d49b9844d-nwqhq           Container started
+53m         Normal    Created                   pod/currencyservice-d49b9844d-nwqhq           Container created
+53m         Normal    Pulled                    pod/currencyservice-d49b9844d-nwqhq           Successfully pulled image "us-central1-docker.pkg.dev/google-samples/microservices-demo/currencyservice:v0.10.4" in 11.105s (12.965s including waiting). Image size: 43257391 bytes.
+53m         Warning   Unhealthy                 pod/currencyservice-d49b9844d-nwqhq           Readiness probe failed: timeout: failed to connect service "10.244.0.3:7000" within 1s: context deadline exceeded
+53m         Normal    Pulled                    pod/productcatalogservice-67849487f4-9jj55    Successfully pulled image "us-central1-docker.pkg.dev/google-samples/microservices-demo/productcatalogservice:v0.10.4" in 4.822s (17.607s including waiting). Image size: 16398431 bytes.
+53m         Normal    Started                   pod/productcatalogservice-67849487f4-9jj55    Container started
+53m         Normal    Created                   pod/productcatalogservice-67849487f4-9jj55    Container created
+53m         Warning   Unhealthy                 pod/productcatalogservice-67849487f4-9jj55    Readiness probe failed: timeout: failed to connect service "10.244.0.5:3550" within 1s: context deadline exceeded
+53m         Normal    Started                   pod/shippingservice-799854c9b8-7k2vh          Container started
+53m         Normal    Created                   pod/shippingservice-799854c9b8-7k2vh          Container created
+53m         Normal    Pulled                    pod/shippingservice-799854c9b8-7k2vh          Successfully pulled image "us-central1-docker.pkg.dev/google-samples/microservices-demo/shippingservice:v0.10.4" in 2.661s (20.233s including waiting). Image size: 11540171 bytes.
+53m         Warning   Unhealthy                 pod/shippingservice-799854c9b8-7k2vh          Readiness probe failed: timeout: failed to connect service "10.244.0.7:50051" within 1s: context deadline exceeded
+53m         Normal    Pulled                    pod/cartservice-58b95597cf-2fvxl              Successfully pulled image "us-central1-docker.pkg.dev/google-samples/microservices-demo/cartservice:v0.10.4" in 4.086s (24.316s including waiting). Image size: 17695280 bytes.
+53m         Normal    Created                   pod/cartservice-58b95597cf-2fvxl              Container created
+53m         Normal    Started                   pod/cartservice-58b95597cf-2fvxl              Container started
+53m         Normal    Started                   pod/checkoutservice-687c78c598-s47pg          Container started
+53m         Normal    Created                   pod/checkoutservice-687c78c598-s47pg          Container created
+53m         Normal    Pulled                    pod/checkoutservice-687c78c598-s47pg          Successfully pulled image "us-central1-docker.pkg.dev/google-samples/microservices-demo/checkoutservice:v0.10.4" in 4.151s (28.453s including waiting). Image size: 11970873 bytes.
+53m         Warning   Unhealthy                 pod/checkoutservice-687c78c598-s47pg          Readiness probe failed: timeout: failed to connect service "10.244.0.6:5050" within 1s: context deadline exceeded
+53m         Normal    Pulled                    pod/paymentservice-66b7c67bd4-bhjh5           Successfully pulled image "us-central1-docker.pkg.dev/google-samples/microservices-demo/paymentservice:v0.10.4" in 10.306s (38.372s including waiting). Image size: 41654966 bytes.
+53m         Normal    Started                   pod/paymentservice-66b7c67bd4-bhjh5           Container started
+53m         Normal    Created                   pod/paymentservice-66b7c67bd4-bhjh5           Container created
+53m         Warning   Unhealthy                 pod/cartservice-58b95597cf-2fvxl              Liveness probe failed: timeout: health rpc did not complete within 1s
+53m         Warning   Unhealthy                 pod/paymentservice-66b7c67bd4-bhjh5           Readiness probe failed: timeout: failed to connect service "10.244.0.11:50051" within 1s: context deadline exceeded
+53m         Warning   Unhealthy                 pod/paymentservice-66b7c67bd4-bhjh5           Liveness probe failed: timeout: failed to connect service "10.244.0.11:50051" within 1s: context deadline exceeded
+53m         Normal    Created                   pod/redis-cart-6fdc7894b7-krbvd               Container created
+53m         Normal    Pulled                    pod/redis-cart-6fdc7894b7-krbvd               Successfully pulled image "redis:alpine" in 4.266s (42.607s including waiting). Image size: 39541214 bytes.
+53m         Normal    Started                   pod/redis-cart-6fdc7894b7-krbvd               Container started
+53m         Warning   Unhealthy                 pod/redis-cart-6fdc7894b7-krbvd               Readiness probe failed: dial tcp 10.244.0.9:6379: connect: connection refused
+52m         Normal    Started                   pod/emailservice-796765984-d8qbd              Container started
+52m         Normal    Pulled                    pod/emailservice-796765984-d8qbd              Successfully pulled image "us-central1-docker.pkg.dev/google-samples/microservices-demo/emailservice:v0.10.4" in 8.151s (50.722s including waiting). Image size: 58633220 bytes.
+52m         Normal    Created                   pod/emailservice-796765984-d8qbd              Container created
+52m         Normal    Started                   pod/frontend-7f5f76b5ff-5x8q5                 Container started
+52m         Normal    Created                   pod/frontend-7f5f76b5ff-5x8q5                 Container created
+52m         Normal    Pulled                    pod/frontend-7f5f76b5ff-5x8q5                 Successfully pulled image "us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend:v0.10.4" in 4.406s (54.926s including waiting). Image size: 17369651 bytes.
+52m         Warning   Unhealthy                 pod/emailservice-796765984-d8qbd              Liveness probe failed: timeout: failed to connect service "10.244.0.10:8080" within 1s: context deadline exceeded
+52m         Warning   Unhealthy                 pod/emailservice-796765984-d8qbd              Readiness probe failed: timeout: failed to connect service "10.244.0.10:8080" within 1s: context deadline exceeded
+52m         Normal    Pulled                    pod/adservice-957f96f7d-bn4wx                 Successfully pulled image "us-central1-docker.pkg.dev/google-samples/microservices-demo/adservice:v0.10.4" in 9.501s (1m4.206s including waiting). Image size: 109363949 bytes.
+52m         Normal    Started                   pod/adservice-957f96f7d-bn4wx                 Container started
+52m         Normal    Created                   pod/adservice-957f96f7d-bn4wx                 Container created
+52m         Normal    Created                   pod/recommendationservice-76558856fb-8jg9m    Container created
+52m         Normal    Started                   pod/recommendationservice-76558856fb-8jg9m    Container started
+52m         Normal    Pulled                    pod/recommendationservice-76558856fb-8jg9m    Successfully pulled image "us-central1-docker.pkg.dev/google-samples/microservices-demo/recommendationservice:v0.10.4" in 10.85s (1m15.044s including waiting). Image size: 55767325 bytes.
+52m         Normal    Pulling                   pod/loadgenerator-74c4986859-vdgc9            Pulling image "us-central1-docker.pkg.dev/google-samples/microservices-demo/loadgenerator:v0.10.4"
+52m         Warning   Unhealthy                 pod/recommendationservice-76558856fb-8jg9m    Readiness probe failed: timeout: failed to connect service "10.244.0.13:8080" within 1s: context deadline exceeded
+52m         Warning   Unhealthy                 pod/recommendationservice-76558856fb-8jg9m    Liveness probe failed: timeout: failed to connect service "10.244.0.13:8080" within 1s: context deadline exceeded
+52m         Normal    Created                   pod/loadgenerator-74c4986859-vdgc9            Container created
+52m         Normal    Started                   pod/loadgenerator-74c4986859-vdgc9            Container started
+52m         Normal    Pulled                    pod/loadgenerator-74c4986859-vdgc9            Successfully pulled image "us-central1-docker.pkg.dev/google-samples/microservices-demo/loadgenerator:v0.10.4" in 10.247s (10.247s including waiting). Image size: 70340883 bytes.
+52m         Warning   Unhealthy                 pod/adservice-957f96f7d-bn4wx                 Liveness probe failed: timeout: health rpc did not complete within 1s
+35m         Normal    Sync                      ingress/boutique-ingress                      Scheduled for sync
+9m22s       Normal    NodeHasSufficientMemory   node/minikube                                 Node minikube status is now: NodeHasSufficientMemory
+9m22s       Normal    Starting                  node/minikube                                 Starting kubelet.
+9m22s       Normal    NodeAllocatableEnforced   node/minikube                                 Updated Node Allocatable limit across pods
+9m22s       Normal    NodeHasSufficientPID      node/minikube                                 Node minikube status is now: NodeHasSufficientPID
+9m22s       Normal    NodeHasNoDiskPressure     node/minikube                                 Node minikube status is now: NodeHasNoDiskPressure
+9m17s       Normal    SandboxChanged            pod/frontend-7f5f76b5ff-5x8q5                 Pod sandbox changed, it will be killed and re-created.
+9m17s       Normal    SandboxChanged            pod/cartservice-58b95597cf-2fvxl              Pod sandbox changed, it will be killed and re-created.
+9m17s       Normal    SandboxChanged            pod/emailservice-796765984-d8qbd              Pod sandbox changed, it will be killed and re-created.
+9m17s       Normal    SandboxChanged            pod/recommendationservice-76558856fb-8jg9m    Pod sandbox changed, it will be killed and re-created.
+9m17s       Normal    SandboxChanged            pod/redis-cart-6fdc7894b7-krbvd               Pod sandbox changed, it will be killed and re-created.
+9m17s       Normal    SandboxChanged            pod/currencyservice-d49b9844d-nwqhq           Pod sandbox changed, it will be killed and re-created.
+9m17s       Normal    SandboxChanged            pod/productcatalogservice-67849487f4-9jj55    Pod sandbox changed, it will be killed and re-created.
+9m17s       Warning   Rebooted                  node/minikube                                 Node minikube has been rebooted, boot id: 7c6e8d2b-9540-445e-abe8-0043199d13f4
+9m17s       Normal    SandboxChanged            pod/loadgenerator-74c4986859-vdgc9            Pod sandbox changed, it will be killed and re-created.
+9m17s       Normal    SandboxChanged            pod/checkoutservice-687c78c598-s47pg          Pod sandbox changed, it will be killed and re-created.
+9m17s       Normal    SandboxChanged            pod/shippingservice-799854c9b8-7k2vh          Pod sandbox changed, it will be killed and re-created.
+9m17s       Normal    SandboxChanged            pod/paymentservice-66b7c67bd4-bhjh5           Pod sandbox changed, it will be killed and re-created.
+9m17s       Normal    SandboxChanged            pod/adservice-957f96f7d-bn4wx                 Pod sandbox changed, it will be killed and re-created.
+9m15s       Normal    Pulled                    pod/frontend-7f5f76b5ff-5x8q5                 Container image "us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend:v0.10.4" already present on machine and can be accessed by the pod
+9m15s       Normal    Pulled                    pod/shippingservice-799854c9b8-7k2vh          Container image "us-central1-docker.pkg.dev/google-samples/microservices-demo/shippingservice:v0.10.4" already present on machine and can be accessed by the pod
+9m15s       Normal    Pulled                    pod/emailservice-796765984-d8qbd              Container image "us-central1-docker.pkg.dev/google-samples/microservices-demo/emailservice:v0.10.4" already present on machine and can be accessed by the pod
+9m15s       Normal    Created                   pod/adservice-957f96f7d-bn4wx                 Container created
+9m15s       Normal    Pulled                    pod/adservice-957f96f7d-bn4wx                 Container image "us-central1-docker.pkg.dev/google-samples/microservices-demo/adservice:v0.10.4" already present on machine and can be accessed by the pod
+9m15s       Normal    Created                   pod/cartservice-58b95597cf-2fvxl              Container created
+9m15s       Normal    Created                   pod/paymentservice-66b7c67bd4-bhjh5           Container created
+9m15s       Normal    Pulled                    pod/cartservice-58b95597cf-2fvxl              Container image "us-central1-docker.pkg.dev/google-samples/microservices-demo/cartservice:v0.10.4" already present on machine and can be accessed by the pod
+9m15s       Normal    Pulled                    pod/currencyservice-d49b9844d-nwqhq           Container image "us-central1-docker.pkg.dev/google-samples/microservices-demo/currencyservice:v0.10.4" already present on machine and can be accessed by the pod
+9m15s       Normal    Pulled                    pod/paymentservice-66b7c67bd4-bhjh5           Container image "us-central1-docker.pkg.dev/google-samples/microservices-demo/paymentservice:v0.10.4" already present on machine and can be accessed by the pod
+9m15s       Normal    Pulling                   pod/loadgenerator-74c4986859-vdgc9            Pulling image "busybox:latest"
+9m15s       Normal    Pulled                    pod/checkoutservice-687c78c598-s47pg          Container image "us-central1-docker.pkg.dev/google-samples/microservices-demo/checkoutservice:v0.10.4" already present on machine and can be accessed by the pod
+9m15s       Normal    Created                   pod/checkoutservice-687c78c598-s47pg          Container created
+9m15s       Normal    Created                   pod/recommendationservice-76558856fb-8jg9m    Container created
+9m15s       Normal    Pulled                    pod/recommendationservice-76558856fb-8jg9m    Container image "us-central1-docker.pkg.dev/google-samples/microservices-demo/recommendationservice:v0.10.4" already present on machine and can be accessed by the pod
+9m15s       Normal    Pulled                    pod/productcatalogservice-67849487f4-9jj55    Container image "us-central1-docker.pkg.dev/google-samples/microservices-demo/productcatalogservice:v0.10.4" already present on machine and can be accessed by the pod
+9m14s       Normal    Started                   pod/paymentservice-66b7c67bd4-bhjh5           Container started
+9m14s       Normal    Created                   pod/shippingservice-799854c9b8-7k2vh          Container created
+9m14s       Normal    Created                   pod/frontend-7f5f76b5ff-5x8q5                 Container created
+9m14s       Normal    Started                   pod/recommendationservice-76558856fb-8jg9m    Container started
+9m14s       Normal    Pulled                    pod/redis-cart-6fdc7894b7-krbvd               Container image "redis:alpine" already present on machine and can be accessed by the pod
+9m14s       Normal    RegisteredNode            node/minikube                                 Node minikube event: Registered Node minikube in Controller
+9m14s       Normal    Created                   pod/redis-cart-6fdc7894b7-krbvd               Container created
+9m14s       Normal    Started                   pod/frontend-7f5f76b5ff-5x8q5                 Container started
+9m14s       Normal    Started                   pod/adservice-957f96f7d-bn4wx                 Container started
+9m14s       Normal    Created                   pod/emailservice-796765984-d8qbd              Container created
+9m14s       Normal    Created                   pod/currencyservice-d49b9844d-nwqhq           Container created
+9m14s       Normal    Started                   pod/checkoutservice-687c78c598-s47pg          Container started
+9m14s       Normal    Started                   pod/productcatalogservice-67849487f4-9jj55    Container started
+9m14s       Normal    Created                   pod/productcatalogservice-67849487f4-9jj55    Container created
+9m14s       Normal    Started                   pod/cartservice-58b95597cf-2fvxl              Container started
+9m13s       Warning   Unhealthy                 pod/redis-cart-6fdc7894b7-krbvd               Readiness probe failed: dial tcp 10.244.0.10:6379: connect: connection refused
+9m13s       Normal    Started                   pod/redis-cart-6fdc7894b7-krbvd               Container started
+9m13s       Normal    Pulled                    pod/loadgenerator-74c4986859-vdgc9            Successfully pulled image "busybox:latest" in 1.79s (1.79s including waiting). Image size: 2236767 bytes.
+9m13s       Normal    Started                   pod/emailservice-796765984-d8qbd              Container started
+9m13s       Normal    Started                   pod/shippingservice-799854c9b8-7k2vh          Container started
+9m13s       Normal    Created                   pod/loadgenerator-74c4986859-vdgc9            Container created
+9m13s       Normal    Started                   pod/currencyservice-d49b9844d-nwqhq           Container started
+9m13s       Normal    Started                   pod/loadgenerator-74c4986859-vdgc9            Container started
+9m12s       Warning   Unhealthy                 pod/shippingservice-799854c9b8-7k2vh          Readiness probe failed: timeout: failed to connect service "10.244.0.11:50051" within 1s: context deadline exceeded
+9m9s        Warning   Unhealthy                 pod/paymentservice-66b7c67bd4-bhjh5           Liveness probe failed: timeout: failed to connect service "10.244.0.2:50051" within 1s: context deadline exceeded
+9m8s        Warning   Unhealthy                 pod/currencyservice-d49b9844d-nwqhq           Readiness probe failed: timeout: failed to connect service "10.244.0.9:7000" within 1s: context deadline exceeded
+9m6s        Warning   Unhealthy                 pod/recommendationservice-76558856fb-8jg9m    Readiness probe failed: timeout: failed to connect service "10.244.0.5:8080" within 1s: context deadline exceeded
+9m6s        Warning   Unhealthy                 pod/recommendationservice-76558856fb-8jg9m    Liveness probe failed: timeout: failed to connect service "10.244.0.5:8080" within 1s: context deadline exceeded
+9m6s        Warning   Unhealthy                 pod/emailservice-796765984-d8qbd              Liveness probe failed: timeout: failed to connect service "10.244.0.13:8080" within 1s: context deadline exceeded
+9m5s        Warning   Unhealthy                 pod/emailservice-796765984-d8qbd              Readiness probe failed: timeout: failed to connect service "10.244.0.13:8080" within 1s: context deadline exceeded
+8m57s       Warning   Unhealthy                 pod/cartservice-58b95597cf-2fvxl              Liveness probe failed: timeout: health rpc did not complete within 1s
+8m57s       Warning   Unhealthy                 pod/cartservice-58b95597cf-2fvxl              Readiness probe failed: timeout: health rpc did not complete within 1s
+8m49s       Warning   Unhealthy                 pod/adservice-957f96f7d-bn4wx                 Readiness probe failed: timeout: health rpc did not complete within 1s
+8m24s       Normal    Pulled                    pod/loadgenerator-74c4986859-vdgc9            Container image "us-central1-docker.pkg.dev/google-samples/microservices-demo/loadgenerator:v0.10.4" already present on machine and can be accessed by the pod
+8m24s       Normal    Created                   pod/loadgenerator-74c4986859-vdgc9            Container created
+8m24s       Normal    Started                   pod/loadgenerator-74c4986859-vdgc9            Container started
+7m39s       Normal    Sync                      ingress/boutique-ingress                      Scheduled for sync
+5m29s       Normal    Scheduled                 pod/frontend-7f5f76b5ff-xtv8j                 Successfully assigned default/frontend-7f5f76b5ff-xtv8j to minikube
+5m29s       Normal    ScalingReplicaSet         deployment/frontend                           Scaled up replica set frontend-7f5f76b5ff from 1 to 3
+5m29s       Normal    SuccessfulCreate          replicaset/frontend-7f5f76b5ff                Created pod: frontend-7f5f76b5ff-xtv8j
+5m29s       Normal    Scheduled                 pod/frontend-7f5f76b5ff-rhmxc                 Successfully assigned default/frontend-7f5f76b5ff-rhmxc to minikube
+5m29s       Normal    SuccessfulCreate          replicaset/frontend-7f5f76b5ff                Created pod: frontend-7f5f76b5ff-rhmxc
+5m28s       Normal    Created                   pod/frontend-7f5f76b5ff-rhmxc                 Container created
+5m28s       Normal    Pulled                    pod/frontend-7f5f76b5ff-rhmxc                 Container image "us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend:v0.10.4" already present on machine and can be accessed by the pod
+5m28s       Normal    Started                   pod/frontend-7f5f76b5ff-xtv8j                 Container started
+5m28s       Normal    Created                   pod/frontend-7f5f76b5ff-xtv8j                 Container created
+5m28s       Normal    Pulled                    pod/frontend-7f5f76b5ff-xtv8j                 Container image "us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend:v0.10.4" already present on machine and can be accessed by the pod
+5m28s       Normal    Started                   pod/frontend-7f5f76b5ff-rhmxc                 Container started
+4m29s       Normal    SuccessfulCreate          replicaset/frontend-7f5f76b5ff                Created pod: frontend-7f5f76b5ff-strv6
+4m29s       Normal    Scheduled                 pod/frontend-7f5f76b5ff-ghkmr                 Successfully assigned default/frontend-7f5f76b5ff-ghkmr to minikube
+4m29s       Normal    ScalingReplicaSet         deployment/frontend                           Scaled up replica set frontend-7f5f76b5ff from 3 to 5
+4m29s       Normal    Scheduled                 pod/frontend-7f5f76b5ff-strv6                 Successfully assigned default/frontend-7f5f76b5ff-strv6 to minikube
+4m29s       Normal    SuccessfulCreate          replicaset/frontend-7f5f76b5ff                Created pod: frontend-7f5f76b5ff-ghkmr
+4m28s       Normal    Created                   pod/frontend-7f5f76b5ff-ghkmr                 Container created
+4m28s       Normal    Pulled                    pod/frontend-7f5f76b5ff-strv6                 Container image "us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend:v0.10.4" already present on machine and can be accessed by the pod
+4m28s       Normal    Pulled                    pod/frontend-7f5f76b5ff-ghkmr                 Container image "us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend:v0.10.4" already present on machine and can be accessed by the pod
+4m28s       Normal    Started                   pod/frontend-7f5f76b5ff-ghkmr                 Container started
+4m28s       Normal    Started                   pod/frontend-7f5f76b5ff-strv6                 Container started
+4m28s       Normal    Created                   pod/frontend-7f5f76b5ff-strv6                 Container created
+3m50s       Normal    Killing                   pod/frontend-7f5f76b5ff-ghkmr                 Stopping container server
+3m50s       Normal    Killing                   pod/frontend-7f5f76b5ff-xtv8j                 Stopping container server
+3m50s       Normal    Killing                   pod/frontend-7f5f76b5ff-strv6                 Stopping container server
+3m50s       Normal    SuccessfulDelete          replicaset/frontend-7f5f76b5ff                Deleted pod: frontend-7f5f76b5ff-xtv8j
+3m50s       Normal    SuccessfulDelete          replicaset/frontend-7f5f76b5ff                Deleted pod: frontend-7f5f76b5ff-strv6
+3m50s       Normal    SuccessfulDelete          replicaset/frontend-7f5f76b5ff                Deleted pod: frontend-7f5f76b5ff-rhmxc
+3m50s       Normal    SuccessfulDelete          replicaset/frontend-7f5f76b5ff                Deleted pod: frontend-7f5f76b5ff-ghkmr
+3m50s       Normal    Killing                   pod/frontend-7f5f76b5ff-rhmxc                 Stopping container server
+3m50s       Normal    ScalingReplicaSet         deployment/frontend                           Scaled down replica set frontend-7f5f76b5ff from 5 to 1
+
+$ kubectl top pods -l app=currencyservice
+NAME                              CPU(cores)   MEMORY(bytes)   
+currencyservice-d49b9844d-nwqhq   12m          70Mi            
+
+$ kubectl top pods -l app=productcatalogservice
+NAME                                     CPU(cores)   MEMORY(bytes)   
+productcatalogservice-67849487f4-9jj55   8m           28Mi            
+
+[0;32m═══ 6 · MANUAL SCALING — FRONTEND ═══[0m
+
+$ kubectl scale deployment frontend --replicas=1
+deployment.apps/frontend scaled
+
+$ kubectl wait --for=condition=ready pod -l app=frontend --timeout=60s
+pod/frontend-7f5f76b5ff-5x8q5 condition met
+
+$ kubectl top pods -l app=frontend
+NAME                        CPU(cores)   MEMORY(bytes)   
+frontend-7f5f76b5ff-5x8q5   17m          27Mi            
+
+$ kubectl scale deployment frontend --replicas=3
+deployment.apps/frontend scaled
+
+$ kubectl wait --for=condition=ready pod -l app=frontend --timeout=60s
+pod/frontend-7f5f76b5ff-5x8q5 condition met
+pod/frontend-7f5f76b5ff-jjgwz condition met
+pod/frontend-7f5f76b5ff-qk97v condition met
+
+$ kubectl top pods -l app=frontend
+NAME                        CPU(cores)   MEMORY(bytes)   
+frontend-7f5f76b5ff-5x8q5   17m          27Mi            
+
+$ kubectl scale deployment frontend --replicas=5
+deployment.apps/frontend scaled
+
+$ kubectl wait --for=condition=ready pod -l app=frontend --timeout=60s
+pod/frontend-7f5f76b5ff-5x8q5 condition met
+pod/frontend-7f5f76b5ff-h4gj6 condition met
+pod/frontend-7f5f76b5ff-hd47b condition met
+pod/frontend-7f5f76b5ff-jjgwz condition met
+pod/frontend-7f5f76b5ff-qk97v condition met
+
+$ kubectl top pods -l app=frontend
+NAME                        CPU(cores)   MEMORY(bytes)   
+frontend-7f5f76b5ff-5x8q5   17m          27Mi            
+
+$ kubectl scale deployment frontend --replicas=1
+deployment.apps/frontend scaled
+
+[0;32m═══ 7 · HORIZONTAL POD AUTOSCALER (HPA) ═══[0m
+
+$ kubectl get deployment currencyservice -o jsonpath='{.spec.template.spec.containers[0].resources}' | jq
+{
+  "limits": {
+    "cpu": "200m",
+    "memory": "128Mi"
+  },
+  "requests": {
+    "cpu": "100m",
+    "memory": "64Mi"
+  }
+}
+
+$ kubectl patch deployment currencyservice -p '{"spec":{"template":{"spec":{"containers":[{"name":"server","resources":{"requests":{"memory":"64Mi","cpu":"100m"},"limits":{"memory":"128Mi","cpu":"200m"}}}]}}}}'
+deployment.apps/currencyservice patched (no change)
+  (currencyservice-hpa.yaml written)
+
+$ kubectl apply -f currencyservice-hpa.yaml
+horizontalpodautoscaler.autoscaling/currencyservice-hpa created
+
+$ kubectl get hpa currencyservice-hpa
+NAME                  REFERENCE                    TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+currencyservice-hpa   Deployment/currencyservice   cpu: 12%/50%   1         5         1          3s
+
+[0;32m═══ 8 · LOAD GENERATOR EXPERIMENTS ═══[0m
+
+$ kubectl get pods -l app=loadgenerator
+NAME                             READY   STATUS    RESTARTS      AGE
+loadgenerator-74c4986859-vdgc9   1/1     Running   1 (10m ago)   54m
+
+$ kubectl describe deployment loadgenerator
+Name:                   loadgenerator
+Namespace:              default
+CreationTimestamp:      Mon, 02 Nov 2026 16:13:29 +0000
+Labels:                 app=loadgenerator
+Annotations:            deployment.kubernetes.io/revision: 1
+Selector:               app=loadgenerator
+Replicas:               1 desired | 1 updated | 1 total | 1 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+Pod Template:
+  Labels:           app=loadgenerator
+  Annotations:      sidecar.istio.io/rewriteAppHTTPProbers: true
+  Service Account:  loadgenerator
+  Init Containers:
+   frontend-check:
+    Image:      busybox:latest
+    Port:       <none>
+    Host Port:  <none>
+    Command:
+      /bin/sh
+      -exc
+      MAX_RETRIES=12
+      RETRY_INTERVAL=10
+      for i in $(seq 1 $MAX_RETRIES); do
+        echo "Attempt $i: Pinging frontend: ${FRONTEND_ADDR}..."
+        STATUSCODE=$(wget --server-response http://${FRONTEND_ADDR} 2>&1 | awk '/^  HTTP/{print $2}')
+        if [ $STATUSCODE -eq 200 ]; then
+            echo "Frontend is reachable."
+            exit 0
+        fi
+        echo "Error: Could not reach frontend - Status code: ${STATUSCODE}"
+        sleep $RETRY_INTERVAL
+      done
+      echo "Failed to reach frontend after $MAX_RETRIES attempts."
+      exit 1
+      
+    Environment:
+      FRONTEND_ADDR:  frontend:80
+    Mounts:           <none>
+  Containers:
+   main:
+    Image:      us-central1-docker.pkg.dev/google-samples/microservices-demo/loadgenerator:v0.10.4
+    Port:       <none>
+    Host Port:  <none>
+    Limits:
+      cpu:     500m
+      memory:  512Mi
+    Requests:
+      cpu:     300m
+      memory:  256Mi
+    Environment:
+      FRONTEND_ADDR:  frontend:80
+      USERS:          10
+      RATE:           1
+    Mounts:           <none>
+  Volumes:            <none>
+  Node-Selectors:     <none>
+  Tolerations:        <none>
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Progressing    True    NewReplicaSetAvailable
+  Available      True    MinimumReplicasAvailable
+OldReplicaSets:  <none>
+NewReplicaSet:   loadgenerator-74c4986859 (1/1 replicas created)
+Events:
+  Type    Reason             Age   From                   Message
+  ----    ------             ----  ----                   -------
+  Normal  ScalingReplicaSet  54m   deployment-controller  Scaled up replica set loadgenerator-74c4986859 from 0 to 1
+
+$ kubectl get deployment loadgenerator -o jsonpath='{.spec.template.spec.containers[0].env[?(@.name=="USERS")].value}'
+10
+[0;32m═══   Load: USERS=10 ═══[0m
+
+$ kubectl set env deployment/loadgenerator USERS=10
+deployment.apps/loadgenerator env updated
+
+$ kubectl get hpa currencyservice-hpa
+NAME                  REFERENCE                    TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+currencyservice-hpa   Deployment/currencyservice   cpu: 14%/50%   1         5         1          2m9s
+
+$ kubectl get pods -l app=currencyservice
+NAME                              READY   STATUS    RESTARTS      AGE
+currencyservice-d49b9844d-nwqhq   1/1     Running   1 (12m ago)   56m
+
+$ kubectl top pods -l app=currencyservice
+NAME                              CPU(cores)   MEMORY(bytes)   
+currencyservice-d49b9844d-nwqhq   11m          71Mi            
+
+$ kubectl logs deployment/loadgenerator --tail=20
+Defaulted container "main" out of: main, frontend-check (init)
+
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      /                                                                                 19     0(0.00%) |     22      17      34     23 |    0.10        0.00
+GET      /cart                                                                             42     0(0.00%) |     13      10      18     13 |    0.10        0.00
+POST     /cart                                                                             29     0(0.00%) |     23      15      65     19 |    0.30        0.00
+POST     /cart/checkout                                                                     8     0(0.00%) |     37      20      73     25 |    0.00        0.00
+GET      /product/0PUK6V6EV0                                                               22     0(0.00%) |     15      12      21     16 |    0.30        0.00
+GET      /product/1YMWWN1N4O                                                               12     0(0.00%) |     15      11      17     15 |    0.10        0.00
+GET      /product/2ZYFJ3GM2N                                                               21     0(0.00%) |     16      12      22     16 |    0.10        0.00
+GET      /product/66VCHSJNUP                                                               15     0(0.00%) |     15      12      23     16 |    0.30        0.00
+GET      /product/6E92ZMYYFZ                                                               11     0(0.00%) |     15      12      23     15 |    0.00        0.00
+GET      /product/9SIQT8TOJO                                                               22     0(0.00%) |     17      13      49     16 |    0.30        0.00
+GET      /product/L9ECAV7KIM                                                               24     0(0.00%) |     16      11      26     16 |    0.10        0.00
+GET      /product/LS4PSXUNUM                                                               13     0(0.00%) |     15      12      19     16 |    0.30        0.00
+GET      /product/OLJCESPC7Z                                                               11     0(0.00%) |     20      12      76     15 |    0.00        0.00
+POST     /setCurrency                                                                      22     0(0.00%) |     22      17      31     21 |    0.20        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                       271     0(0.00%) |     18      10      76     16 |    2.20        0.00
+
+
+[0;32m═══   Load: USERS=50 ═══[0m
+
+$ kubectl set env deployment/loadgenerator USERS=50
+deployment.apps/loadgenerator env updated
+
+$ kubectl get hpa currencyservice-hpa
+NAME                  REFERENCE                    TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+currencyservice-hpa   Deployment/currencyservice   cpu: 45%/50%   1         5         1          6m8s
+
+$ kubectl get pods -l app=currencyservice
+NAME                              READY   STATUS    RESTARTS      AGE
+currencyservice-d49b9844d-nwqhq   1/1     Running   1 (16m ago)   60m
+
+$ kubectl top pods -l app=currencyservice
+NAME                              CPU(cores)   MEMORY(bytes)   
+currencyservice-d49b9844d-nwqhq   47m          78Mi            
+
+$ kubectl logs deployment/loadgenerator --tail=20
+Defaulted container "main" out of: main, frontend-check (init)
+
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      /                                                                                133     0(0.00%) |     29      14     111     21 |    0.30        0.00
+GET      /cart                                                                            266     0(0.00%) |     21       9     279     15 |    1.80        0.00
+POST     /cart                                                                            281     0(0.00%) |     39      14     179     23 |    1.50        0.00
+POST     /cart/checkout                                                                    74     0(0.00%) |     41      19     101     30 |    0.20        0.00
+GET      /product/0PUK6V6EV0                                                              141     0(0.00%) |     18      10     123     14 |    0.40        0.00
+GET      /product/1YMWWN1N4O                                                              130     0(0.00%) |     17      11      91     13 |    0.60        0.00
+GET      /product/2ZYFJ3GM2N                                                              128     0(0.00%) |     17      11      95     14 |    0.30        0.00
+GET      /product/66VCHSJNUP                                                              124     0(0.00%) |     17      11      98     14 |    0.70        0.00
+GET      /product/6E92ZMYYFZ                                                              120     0(0.00%) |     22      11      88     15 |    0.70        0.00
+GET      /product/9SIQT8TOJO                                                              147     0(0.00%) |     20      10      99     14 |    0.70        0.00
+GET      /product/L9ECAV7KIM                                                              127     0(0.00%) |     18      10     119     14 |    0.90        0.00
+GET      /product/LS4PSXUNUM                                                              119     0(0.00%) |     18      10      89     14 |    0.90        0.00
+GET      /product/OLJCESPC7Z                                                              145     0(0.00%) |     18      10     128     14 |    0.70        0.00
+POST     /setCurrency                                                                     171     0(0.00%) |     33      15     345     20 |    0.50        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                      2106     0(0.00%) |     24       9     345     16 |   10.20        0.00
+
+
+[0;32m═══   Load: USERS=100 ═══[0m
+
+$ kubectl set env deployment/loadgenerator USERS=100
+deployment.apps/loadgenerator env updated
+
+$ kubectl get hpa currencyservice-hpa
+NAME                  REFERENCE                    TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+currencyservice-hpa   Deployment/currencyservice   cpu: 67%/50%   1         5         1          8m30s
+
+$ kubectl get pods -l app=currencyservice
+NAME                              READY   STATUS    RESTARTS      AGE
+currencyservice-d49b9844d-nqch7   1/1     Running   0             16s
+currencyservice-d49b9844d-nwqhq   1/1     Running   1 (18m ago)   62m
+
+$ kubectl top pods -l app=currencyservice
+NAME                              CPU(cores)   MEMORY(bytes)   
+currencyservice-d49b9844d-nwqhq   67m          80Mi            
+
+$ kubectl logs deployment/loadgenerator --tail=20
+Defaulted container "main" out of: main, frontend-check (init)
+
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      /                                                                                205     0(0.00%) |     46      14     309     23 |    0.40        0.00
+GET      /cart                                                                            388     0(0.00%) |     38       9     323     19 |    3.30        0.00
+POST     /cart                                                                            369     0(0.00%) |     61      14     198     58 |    3.10        0.00
+POST     /cart/checkout                                                                   119     0(0.00%) |     56      18     131     43 |    1.20        0.00
+GET      /product/0PUK6V6EV0                                                              187     0(0.00%) |     35      11     155     18 |    1.10        0.00
+GET      /product/1YMWWN1N4O                                                              181     0(0.00%) |     34      10     183     17 |    1.20        0.00
+GET      /product/2ZYFJ3GM2N                                                              178     0(0.00%) |     37      11     304     16 |    1.60        0.00
+GET      /product/66VCHSJNUP                                                              176     0(0.00%) |     34      10     166     16 |    1.20        0.00
+GET      /product/6E92ZMYYFZ                                                              172     0(0.00%) |     34      10     151     17 |    0.90        0.00
+GET      /product/9SIQT8TOJO                                                              174     0(0.00%) |     35      10     182     16 |    1.80        0.00
+GET      /product/L9ECAV7KIM                                                              166     0(0.00%) |     32      11     265     16 |    1.50        0.00
+GET      /product/LS4PSXUNUM                                                              166     0(0.00%) |     35      10     167     19 |    1.50        0.00
+GET      /product/OLJCESPC7Z                                                              169     0(0.00%) |     35      11     206     16 |    1.60        0.00
+POST     /setCurrency                                                                     216     0(0.00%) |     54      15     198     40 |    2.00        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                      2866     0(0.00%) |     42       9     323     22 |   22.40        0.00
+
+
+[0;32m═══   Load: USERS=200 ═══[0m
+
+$ kubectl set env deployment/loadgenerator USERS=200
+deployment.apps/loadgenerator env updated
+
+$ kubectl get hpa currencyservice-hpa
+NAME                  REFERENCE                    TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+currencyservice-hpa   Deployment/currencyservice   cpu: 33%/50%   1         5         2          11m
+
+$ kubectl get pods -l app=currencyservice
+NAME                              READY   STATUS    RESTARTS      AGE
+currencyservice-d49b9844d-nqch7   1/1     Running   0             3m14s
+currencyservice-d49b9844d-nwqhq   1/1     Running   1 (21m ago)   65m
+
+$ kubectl top pods -l app=currencyservice
+NAME                              CPU(cores)   MEMORY(bytes)   
+currencyservice-d49b9844d-nqch7   1m           15Mi            
+currencyservice-d49b9844d-nwqhq   66m          83Mi            
+
+$ kubectl logs deployment/loadgenerator --tail=20
+Defaulted container "main" out of: main, frontend-check (init)
+
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      /                                                                                204     0(0.00%) |     47      14     217     24 |    1.90        0.00
+GET      /cart                                                                            241     0(0.00%) |     40       9     283     18 |    3.30        0.00
+POST     /cart                                                                            251     0(0.00%) |     65      14     324     51 |    4.00        0.00
+POST     /cart/checkout                                                                    80     0(0.00%) |     56      19     146     44 |    1.50        0.00
+GET      /product/0PUK6V6EV0                                                              124     0(0.00%) |     39      10     138     19 |    2.20        0.00
+GET      /product/1YMWWN1N4O                                                              126     0(0.00%) |     42      10     175     19 |    1.50        0.00
+GET      /product/2ZYFJ3GM2N                                                              114     0(0.00%) |     45      10     215     19 |    1.30        0.00
+GET      /product/66VCHSJNUP                                                              116     0(0.00%) |     38       9     184     22 |    1.90        0.00
+GET      /product/6E92ZMYYFZ                                                              104     0(0.00%) |     37      10     162     19 |    0.90        0.00
+GET      /product/9SIQT8TOJO                                                              125     0(0.00%) |     37      11     151     17 |    1.40        0.00
+GET      /product/L9ECAV7KIM                                                              119     0(0.00%) |     36      10     181     20 |    1.60        0.00
+GET      /product/LS4PSXUNUM                                                              153     0(0.00%) |     40      11     351     17 |    2.40        0.00
+GET      /product/OLJCESPC7Z                                                              129     0(0.00%) |     35      10     225     17 |    1.80        0.00
+POST     /setCurrency                                                                     164     0(0.00%) |     58      15     418     36 |    2.30        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                      2050     0(0.00%) |     45       9     418     24 |   28.00        0.00
+
+
+$ kubectl get hpa currencyservice-hpa --watch
+  [timeout 60s]
+NAME                  REFERENCE                    TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+currencyservice-hpa   Deployment/currencyservice   cpu: 33%/50%   1         5         2          11m
+currencyservice-hpa   Deployment/currencyservice   cpu: 50%/50%   1         5         2          12m
+  [watch stopped after 60s]
+
+$ kubectl set env deployment/loadgenerator USERS=10
+deployment.apps/loadgenerator env updated
+
+[0;32m═══ 9 · ROLLING UPDATE AND ROLLBACK ═══[0m
+
+$ kubectl get deployment frontend -o jsonpath='{.spec.template.spec.containers[0].image}'
+us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend:v0.10.4
+$ kubectl rollout history deployment/frontend
+deployment.apps/frontend 
+REVISION  CHANGE-CAUSE
+1         <none>
+
+
+$ kubectl set image deployment/frontend server=us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend:v0.10.2
+deployment.apps/frontend image updated
+
+$ kubectl rollout status deployment/frontend
+Waiting for deployment "frontend" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "frontend" rollout to finish: 1 old replicas are pending termination...
+deployment "frontend" successfully rolled out
+
+$ kubectl rollout history deployment/frontend
+deployment.apps/frontend 
+REVISION  CHANGE-CAUSE
+1         <none>
+2         <none>
+
+
+$ kubectl get pods -l app=frontend --watch
+  [timeout 30s]
+NAME                        READY   STATUS    RESTARTS   AGE
+frontend-6cff5f85b5-gxmtz   1/1     Running   0          22s
+  [watch stopped after 30s]
+
+$ kubectl rollout history deployment/frontend --revision=2
+deployment.apps/frontend with revision #2
+Pod Template:
+  Labels:	app=frontend
+	pod-template-hash=6cff5f85b5
+  Annotations:	sidecar.istio.io/rewriteAppHTTPProbers: true
+  Service Account:	frontend
+  Containers:
+   server:
+    Image:	us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend:v0.10.2
+    Port:	8080/TCP
+    Host Port:	0/TCP
+    Limits:
+      cpu:	200m
+      memory:	128Mi
+    Requests:
+      cpu:	100m
+      memory:	64Mi
+    Liveness:	http-get http://:8080/_healthz delay=10s timeout=1s period=10s successThreshold=1 failureThreshold=3
+    Readiness:	http-get http://:8080/_healthz delay=10s timeout=1s period=10s successThreshold=1 failureThreshold=3
+    Environment:
+      PORT:	8080
+      PRODUCT_CATALOG_SERVICE_ADDR:	productcatalogservice:3550
+      CURRENCY_SERVICE_ADDR:	currencyservice:7000
+      CART_SERVICE_ADDR:	cartservice:7070
+      RECOMMENDATION_SERVICE_ADDR:	recommendationservice:8080
+      SHIPPING_SERVICE_ADDR:	shippingservice:50051
+      CHECKOUT_SERVICE_ADDR:	checkoutservice:5050
+      AD_SERVICE_ADDR:	adservice:9555
+      SHOPPING_ASSISTANT_SERVICE_ADDR:	shoppingassistantservice:80
+      ENABLE_PROFILER:	0
+    Mounts:	<none>
+  Volumes:	<none>
+  Node-Selectors:	<none>
+  Tolerations:	<none>
+
+
+$ kubectl rollout undo deployment/frontend
+Warning: resource deployments/frontend was previously managed with 'kubectl apply'. Rolling back will not update the kubectl.kubernetes.io/last-applied-configuration annotation, which may cause unexpected behavior on future 'kubectl apply' operations. Consider using 'kubectl apply' with your previous configuration file instead.
+deployment.apps/frontend rolled back
+
+$ kubectl rollout status deployment/frontend
+deployment "frontend" successfully rolled out
+
+$ kubectl rollout history deployment/frontend
+deployment.apps/frontend 
+REVISION  CHANGE-CAUSE
+2         <none>
+3         <none>
+
+
+[0;32m═══ 10 · HEALTH CHECKS ═══[0m
+
+$ kubectl describe deployment currencyservice
+Name:                   currencyservice
+Namespace:              default
+CreationTimestamp:      Mon, 02 Nov 2026 16:13:29 +0000
+Labels:                 app=currencyservice
+Annotations:            deployment.kubernetes.io/revision: 1
+Selector:               app=currencyservice
+Replicas:               2 desired | 2 updated | 2 total | 2 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+Pod Template:
+  Labels:           app=currencyservice
+  Service Account:  currencyservice
+  Containers:
+   server:
+    Image:      us-central1-docker.pkg.dev/google-samples/microservices-demo/currencyservice:v0.10.4
+    Port:       7000/TCP (grpc)
+    Host Port:  0/TCP (grpc)
+    Limits:
+      cpu:     200m
+      memory:  128Mi
+    Requests:
+      cpu:      100m
+      memory:   64Mi
+    Liveness:   grpc <pod>:7000  delay=0s timeout=1s period=10s successThreshold=1 failureThreshold=3
+    Readiness:  grpc <pod>:7000  delay=0s timeout=1s period=10s successThreshold=1 failureThreshold=3
+    Environment:
+      PORT:              7000
+      DISABLE_PROFILER:  1
+    Mounts:              <none>
+  Volumes:               <none>
+  Node-Selectors:        <none>
+  Tolerations:           <none>
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Progressing    True    NewReplicaSetAvailable
+  Available      True    MinimumReplicasAvailable
+OldReplicaSets:  <none>
+NewReplicaSet:   currencyservice-d49b9844d (2/2 replicas created)
+Events:
+  Type    Reason             Age   From                   Message
+  ----    ------             ----  ----                   -------
+  Normal  ScalingReplicaSet  68m   deployment-controller  Scaled up replica set currencyservice-d49b9844d from 0 to 1
+  Normal  ScalingReplicaSet  6m9s  deployment-controller  Scaled up replica set currencyservice-d49b9844d from 1 to 2
+
+$ kubectl describe deployment frontend
+Name:                   frontend
+Namespace:              default
+CreationTimestamp:      Mon, 02 Nov 2026 16:13:29 +0000
+Labels:                 app=frontend
+Annotations:            deployment.kubernetes.io/revision: 3
+Selector:               app=frontend
+Replicas:               1 desired | 1 updated | 1 total | 1 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+Pod Template:
+  Labels:           app=frontend
+  Annotations:      sidecar.istio.io/rewriteAppHTTPProbers: true
+  Service Account:  frontend
+  Containers:
+   server:
+    Image:      us-central1-docker.pkg.dev/google-samples/microservices-demo/frontend:v0.10.4
+    Port:       8080/TCP
+    Host Port:  0/TCP
+    Limits:
+      cpu:     200m
+      memory:  128Mi
+    Requests:
+      cpu:      100m
+      memory:   64Mi
+    Liveness:   http-get http://:8080/_healthz delay=10s timeout=1s period=10s successThreshold=1 failureThreshold=3
+    Readiness:  http-get http://:8080/_healthz delay=10s timeout=1s period=10s successThreshold=1 failureThreshold=3
+    Environment:
+      PORT:                             8080
+      PRODUCT_CATALOG_SERVICE_ADDR:     productcatalogservice:3550
+      CURRENCY_SERVICE_ADDR:            currencyservice:7000
+      CART_SERVICE_ADDR:                cartservice:7070
+      RECOMMENDATION_SERVICE_ADDR:      recommendationservice:8080
+      SHIPPING_SERVICE_ADDR:            shippingservice:50051
+      CHECKOUT_SERVICE_ADDR:            checkoutservice:5050
+      AD_SERVICE_ADDR:                  adservice:9555
+      SHOPPING_ASSISTANT_SERVICE_ADDR:  shoppingassistantservice:80
+      ENABLE_PROFILER:                  0
+    Mounts:                             <none>
+  Volumes:                              <none>
+  Node-Selectors:                       <none>
+  Tolerations:                          <none>
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Available      True    MinimumReplicasAvailable
+  Progressing    True    NewReplicaSetAvailable
+OldReplicaSets:  frontend-6cff5f85b5 (0/0 replicas created)
+NewReplicaSet:   frontend-7f5f76b5ff (1/1 replicas created)
+Events:
+  Type    Reason             Age                From                   Message
+  ----    ------             ----               ----                   -------
+  Normal  ScalingReplicaSet  68m                deployment-controller  Scaled up replica set frontend-7f5f76b5ff from 0 to 1
+  Normal  ScalingReplicaSet  15m (x2 over 20m)  deployment-controller  Scaled up replica set frontend-7f5f76b5ff from 1 to 3
+  Normal  ScalingReplicaSet  14m (x2 over 19m)  deployment-controller  Scaled up replica set frontend-7f5f76b5ff from 3 to 5
+  Normal  ScalingReplicaSet  14m (x2 over 18m)  deployment-controller  Scaled down replica set frontend-7f5f76b5ff from 5 to 1
+  Normal  ScalingReplicaSet  99s                deployment-controller  Scaled up replica set frontend-6cff5f85b5 from 0 to 1
+  Normal  ScalingReplicaSet  83s                deployment-controller  Scaled down replica set frontend-7f5f76b5ff from 1 to 0
+  Normal  ScalingReplicaSet  44s                deployment-controller  Scaled up replica set frontend-7f5f76b5ff from 0 to 1
+  Normal  ScalingReplicaSet  33s                deployment-controller  Scaled down replica set frontend-6cff5f85b5 from 1 to 0
+
+[0;32m═══ 11 · SERVICE DISCOVERY ═══[0m
+
+$ kubectl exec -it deployment/redis-cart -- nslookup productcatalogservice
+Server:		10.96.0.10
+Address:	10.96.0.10:53
+
+** server can't find productcatalogservice.svc.cluster.local: NXDOMAIN
+
+
+** server can't find productcatalogservice.cluster.local: NXDOMAIN
+
+** server can't find productcatalogservice.svc.cluster.local: NXDOMAIN
+
+** server can't find productcatalogservice.cluster.local: NXDOMAIN
+
+Name:	productcatalogservice.default.svc.cluster.local
+Address: 10.110.139.60
+
+Non-authoritative answer:
+
+Non-authoritative answer:
+
+command terminated with exit code 1
+
+$ kubectl describe service productcatalogservice
+Name:                     productcatalogservice
+Namespace:                default
+Labels:                   app=productcatalogservice
+Annotations:              <none>
+Selector:                 app=productcatalogservice
+Type:                     ClusterIP
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.110.139.60
+IPs:                      10.110.139.60
+Port:                     grpc  3550/TCP
+TargetPort:               3550/TCP
+Endpoints:                10.244.0.8:3550
+Session Affinity:         None
+Internal Traffic Policy:  Cluster
+Events:                   <none>
+
+[0;32m═══ DONE ═══[0m

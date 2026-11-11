@@ -1,0 +1,42 @@
+=== REAS Kubernetes Lab ===
+Date: Mon Nov  2 16:43:13 UTC 2026
+Host: reas-g04.dyn.fil.isel.pt
+
+
+[0;32m═══ 1 · START CLUSTER ═══[0m
+
+$ minikube start --driver=docker --cpus=4 --memory=8192
+* minikube v1.39.0 on Ubuntu 24.04 (amd64)
+* Using the docker driver based on existing profile
+
+X Exiting due to PROVIDER_DOCKER_NOT_RUNNING: "docker version --format <no value>-<no value>:<no value>" exit status 1: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
+* Suggestion: Start the Docker service
+* Documentation: https://minikube.sigs.k8s.io/docs/drivers/docker/
+
+
+$ kubectl cluster-info
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+Unable to connect to the server: dial tcp 192.168.49.2:8443: connect: no route to host
+
+$ kubectl get nodes
+Unable to connect to the server: dial tcp 192.168.49.2:8443: connect: no route to host
+
+$ kubectl get pods -n kube-system
+Unable to connect to the server: dial tcp 192.168.49.2:8443: connect: no route to host
+
+[0;32m═══ 2 · DEPLOY GOOGLE ONLINE BOUTIQUE ═══[0m
+  (git clone skipped – directory exists)
+
+$ kubectl apply -f /home/student/REAS/kuber/microservices-demo/release/kubernetes-manifests.yaml
+error: error validating "/home/student/REAS/kuber/microservices-demo/release/kubernetes-manifests.yaml": error validating data: failed to download openapi: Get "https://192.168.49.2:8443/openapi/v2?timeout=32s": dial tcp 192.168.49.2:8443: connect: no route to host; if you choose to ignore these errors, turn validation off with --validate=false
+
+$ kubectl wait --for=condition=ready pod --all --timeout=300s
+Unable to connect to the server: dial tcp 192.168.49.2:8443: connect: no route to host
+
+$ kubectl get pods
+Unable to connect to the server: dial tcp 192.168.49.2:8443: connect: no route to host
+
+$ kubectl get services
+
+=== session ended by user ===
