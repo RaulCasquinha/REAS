@@ -1,0 +1,110 @@
+\documentclass[a4paper,11pt]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{graphicx}            % imagens
+\usepackage{booktabs}            % tabelas mais bonitas
+\usepackage{enumitem}            % listas
+\usepackage{hyperref}            % links clicáveis e índice navegável
+\usepackage{fancyhdr}            % cabeçalhos e rodapés
+\usepackage{lmodern}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage[export]{adjustbox}
+\usepackage{seqsplit}
+\usepackage[backend=biber,style=numeric,sorting=none]{biblatex}
+%\addbibresource{bib/references.bib}
+\usepackage[acronym,nomain,nopostdot]{glossaries}
+\makenoidxglossaries
+
+\setcounter{secnumdepth}{0}
+\renewcommand{\contentsname}{Índice}
+\renewcommand{\figurename}{Figura}
+\renewcommand{\tablename}{Tabela}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=blue,
+  pdftitle={Relatorio Cibersegurança},
+}
+
+% ---------- Metadados (edita aqui) ----------
+\newcommand{\titulodoc}{Relatorio Cibersegurança modulo 3}
+\newcommand{\nomeprojeto}{Relatorio Cibersegurança modulo 3}
+\newcommand{\autores}{Autores: \\ Raul Casquinha Nº50394 MEET \\ Felisberto Varela Nº50404 MEET \\ Tomás Figueiredo Nº50881 MEIC}
+\newcommand{\organizacao}{Instituto Superior de Engenharia de Lisboa}
+\newcommand{\versao}{2.0}
+
+% ---------- Cabeçalho e rodapé (não aparecem na capa) ----------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\nomeprojeto}
+\fancyhead[R]{\titulodoc}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Espaçamento entre parágrafos (em vez de indentação)
+\setlength{\headheight}{14pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.6em}
+
+\begin{document}
+
+% =====================================================
+%  CAPA
+% =====================================================
+\begin{titlepage}
+  \thispagestyle{empty}
+  \centering
+
+  \vspace*{1cm}
+  % Descomenta para colocar uma imagem na capa (ficheiro na mesma pasta):
+  % \includegraphics[width=0.35\textwidth]{logo.png}
+  % \vspace{2cm}
+
+  {\large \organizacao \par}
+  \vspace{3cm}
+
+  {\Huge\bfseries \titulodoc \par}
+  \vspace{0.8cm}
+  {\LARGE \nomeprojeto \par}
+
+  \vfill
+
+  {\large \autores \par}
+  \vspace{1cm}
+  {\large \today \par}
+  \vspace{1cm}
+\end{titlepage}
+
+
+% =====================================================
+%  ÍNDICE
+% =====================================================
+\pagenumbering{roman}
+\tableofcontents
+\newpage
+
+% Se quiseres lista de figuras e de tabelas, descomenta:
+% \listoffigures
+% \listoftables
+% \newpage
+
+% Se quiseres glossario com os acronimos, descomenta:
+%\glsaddallunused
+%\printnoidxglossary[type=\acronymtype,title={Lista de Acrónimos}]
+%\newpage
+
+\pagenumbering{arabic}
+
+% ----------------- Relatorio --------------
+Boa noite
+%\printbibliography[title={Referências}]
+
+
+% ----------------- Relatorio --------------
+
+\end{document}

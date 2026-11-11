@@ -2,7 +2,7 @@
 *.aux
 *.lof
 *.log
-*.lot
+docs/report/*.lot
 *.fls
 *.out
 *.toc
