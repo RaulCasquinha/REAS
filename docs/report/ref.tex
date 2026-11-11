@@ -1,0 +1,317 @@
+
+
+
+\section{Introdução}
+\label{sec:introducao}
+Este documento descreve a especificação dos requisitos funcionais e não funcionais da Plan-Scales, uma aplicação de gestão de bandas filarmónicas. A especificação está estruturada sob a forma de um modelo de casos de utilização, complementado por uma especificação suplementar, onde se descrevem os requisitos relevantes que não são contemplados pelos casos de utilização identificados.
+
+\subsection{Âmbito}
+Este documento de especificação de requisitos insere-se no âmbito de um Trabalho Prático da unidade curricular de Engenharia de Software do Mestrado em Engenharia Informática e de Computadores, do DEI do ISEL.
+
+\subsection{Organização do Documento}
+O documento encontra-se organizado da seguinte forma:
+\begin{itemize}
+  \item a Secção~\ref{sec:introducao} apresenta o enquadramento, o âmbito e a organização do documento;
+  \item a Secção~\ref{sec:requisitos} apresenta a especificação dos requisitos funcionais da Plan-Scales;
+  \item a Secção~\ref{sec:espec-suplementar} apresenta a especificação suplementar, com os requisitos não funcionais e os restantes requisitos que não são contemplados pelos casos de utilização;
+  \item a Secção~\ref{sec:casos-utilizacao} apresenta o modelo de casos de utilização, com os atores, o diagrama e a lista de casos de utilização;
+  \item a Secção~\ref{sec:descricao-casos-utilizacao} apresenta a descrição dos casos de utilização principais, com os respetivos fluxos principais e alternativos.
+\end{itemize}
+\pagebreak
+
+
+\section{Especificação de Requisitos}
+\label{sec:requisitos}
+Esta secção especifica os requisitos funcionais e não funcionais da Plan-Scales, bem como os pressupostos e as restrições assumidos. Os prefixos RF e RNF identificam os requisitos, para efeitos de rastreabilidade. A prioridade segue o método MoSCoW (\textit{Must}, \textit{Should}, \textit{Could}, \textit{Won't}).
+
+\subsection{Requisitos Funcionais}
+\begin{longtable}{|p{1.4cm}|p{8.6cm}|p{2.4cm}|p{1.6cm}|}
+\hline
+\textbf{ID} & \textbf{Descrição} & \textbf{Atores} & \textbf{Prior.} \\ \hline
+\endhead
+% --- Autenticação ---
+RF01 & O sistema deve permitir a autenticação através de um fornecedor OpenID Connect (Google ou Microsoft). & Todos & Must \\ \hline
+RF02 & O sistema deve permitir terminar a sessão. & Todos & Must \\ \hline
+% --- Bandas e membros ---
+RF03 & O sistema deve permitir a um utilizador criar uma banda, tornando-se o seu administrador. & Utilizador & Must \\ \hline
+RF04 & O sistema deve permitir ao administrador convidar utilizadores para a banda e atribuir-lhes um papel (gestor, maestro ou músico). & Administrador & Must \\ \hline
+RF05 & O sistema deve permitir que um utilizador pertença a várias bandas, com papéis diferentes em cada uma. & Utilizador & Must \\ \hline
+% --- Eventos ---
+RF06 & O sistema deve permitir criar eventos (concertos e ensaios remarcados). & Gestor & Must \\ \hline
+RF07 & O sistema deve permitir consultar os eventos futuros da banda. & Todos & Must \\ \hline
+% --- Sondagens ---
+RF08 & O sistema deve permitir criar sondagens de disponibilidade para concertos e de remarcação de ensaios. & Gestor & Must \\ \hline
+RF09 & O sistema deve permitir votar numa sondagem ativa e alterar o voto enquanto a sondagem estiver ativa. & Músico & Must \\ \hline
+RF10 & O sistema deve permitir fechar uma sondagem, impedindo novos votos e alterações. & Gestor & Must \\ \hline
+RF11 & O sistema deve permitir consultar os resultados de uma sondagem, incluindo a disponibilidade de cada músico. & Gestor & Must \\ \hline
+% --- Ensaios ---
+RF12 & O sistema deve permitir registar as presenças num ensaio. & Gestor, Maestro & Must \\ \hline
+RF13 & O sistema deve permitir consultar as presenças de um ensaio e a assiduidade de cada músico. & Gestor, Maestro & Must \\ \hline
+RF14 & O sistema deve permitir criar o sumário de um ensaio, com as peças tocadas. & Maestro & Must \\ \hline
+RF15 & O sistema deve permitir consultar os sumários de ensaios anteriores. & Todos & Must \\ \hline
+% --- Repertório ---
+RF16 & O sistema deve permitir adicionar e editar peças no arquivo digital (título, autor, duração e ligações para gravações e PDFs). & Maestro, Gestor & Must \\ \hline
+RF17 & O sistema deve permitir consultar o arquivo digital de peças, incluindo a data do último concerto em que cada peça foi tocada. & Todos & Must \\ \hline
+RF18 & O sistema deve permitir definir a lista de peças de um concerto. & Maestro & Must \\ \hline
+% --- Painel e calendário ---
+RF19 & O sistema deve apresentar ao músico um painel com os próximos eventos, os sumários recentes e as sondagens ativas. & Músico & Should \\ \hline
+RF20 & O sistema deve permitir ligar uma aplicação de calendário (Google Calendar ou Outlook Calendar) e sincronizar manualmente os eventos futuros. & Utilizador & Should \\ \hline
+\end{longtable}
+\pagebreak
+
+\section{Especificação Suplementar}
+\label{sec:espec-suplementar}
+Esta secção apresenta os requisitos não funcionais da Plan-Scales, organizados por categoria. Cada requisito inclui o critério pelo qual será verificado.
+
+\begin{longtable}{|p{1.5cm}|p{2.4cm}|p{6.4cm}|p{3.7cm}|}
+\hline
+\textbf{ID} & \textbf{Categoria} & \textbf{Descrição} & \textbf{Verificação} \\ \hline
+\endhead
+% --- Usabilidade ---
+RNF01 & Usabilidade & Um músico deve conseguir responder a uma sondagem ativa em, no máximo, 3 interações a partir do painel da banda. & Teste de utilização com contagem de cliques. \\ \hline
+RNF02 & Usabilidade & A interface deve estar disponível em português europeu. & Inspeção da interface. \\ \hline
+RNF03 & Usabilidade & A interface deve ser responsiva e utilizável, sem deslocamento horizontal, em ecrãs com largura a partir de 360 px. & Teste em dispositivos e emuladores. \\ \hline
+% --- Compatibilidade ---
+RNF04 & Compatibilidade & O sistema deve funcionar nas duas últimas versões estáveis do Chrome, Firefox, Safari e Edge. & Testes manuais por navegador. \\ \hline
+% --- Desempenho ---
+RNF05 & Desempenho & As páginas principais (painel, eventos e arquivo digital de peças) devem carregar em menos de 3 s numa ligação 4G, para bandas até 100 membros. & Medição com ferramentas do navegador. \\ \hline
+RNF06 & Desempenho & As operações de escrita (voto, registo de presenças) devem ser confirmadas ao utilizador em menos de 2 s em 95\% dos casos. & Teste de carga e registo de tempos. \\ \hline
+% --- Fiabilidade ---
+RNF07 & Fiabilidade & O sistema deve ter uma disponibilidade mensal mínima de 99\%, excluindo a manutenção planeada. & Monitorização do serviço. \\ \hline
+RNF08 & Fiabilidade & Devem ser efetuadas cópias de segurança diárias dos dados, com retenção mínima de 7 dias. & Verificação da configuração e teste de restauro. \\ \hline
+RNF09 & Fiabilidade & A indisponibilidade de um serviço externo (calendário) não deve impedir as restantes funcionalidades, e o utilizador deve ser informado da falha. & Teste com serviço simulado em falha. \\ \hline
+% --- Segurança ---
+RNF10 & Segurança & Toda a comunicação entre cliente e servidor deve utilizar HTTPS (TLS 1.2 ou superior). & Análise da configuração do servidor. \\ \hline
+RNF11 & Segurança & A autenticação deve ser feita exclusivamente via OpenID Connect, e o sistema não deve armazenar palavras-passe. & Revisão da arquitetura e da base de dados. \\ \hline
+RNF12 & Segurança & Os dados de uma banda só devem ser acessíveis aos seus membros, e as permissões por papel devem ser validadas no servidor. & Testes de acesso com utilizadores de bandas e papéis diferentes. \\ \hline
+% --- Privacidade ---
+RNF13 & Privacidade & O sistema deve cumprir o RGPD: recolher apenas os dados pessoais necessários (nome e \textit{email}) e permitir ao utilizador solicitar a eliminação da sua conta e dos seus dados. & Revisão dos dados recolhidos e teste do fluxo de eliminação. \\ \hline
+% --- Suportabilidade ---
+RNF14 & Suportabilidade & A lógica de negócio deve ser coberta por testes automáticos, com uma cobertura mínima de 70\%. & Relatório de cobertura. \\ \hline
+\end{longtable}
+\pagebreak
+
+
+\section{Modelo de Casos de Utilização}
+\label{sec:casos-utilizacao}
+Esta secção apresenta os atores e os casos de utilização da Plan-Scales.
+
+\subsection{Atores}
+A Tabela~\ref{tab:atores} apresenta os atores do sistema. Os atores primários iniciam a interação com o sistema, enquanto os secundários são sistemas externos de que este depende.
+
+\begin{table}[h]
+\centering
+\caption{Atores da Plan-Scales}
+\label{tab:atores}
+\begin{tabular}{|p{3cm}|p{1.8cm}|p{2.8cm}|p{6.4cm}|}
+\hline
+\textbf{Ator} & \textbf{Tipo} & \textbf{Herda de} & \textbf{Descrição} \\ \hline
+Utilizador & Primário & --- & Pessoa que utiliza o sistema fora do contexto de uma banda específica, por exemplo, para se autenticar, criar bandas ou aceitar convites. \\ \hline
+Membro de Banda & Primário (abstrato) & Utilizador & Utilizador que pertence a uma banda. Consulta os eventos, os sumários, o painel e o arquivo digital de peças, e sincroniza eventos com o seu calendário. \\ \hline
+Músico & Primário & Membro de Banda & Membro que participa nas sondagens da banda. \\ \hline
+Maestro & Primário & Membro de Banda & Responsável pelo repertório: gere as peças, define as listas de peças dos concertos e escreve os sumários dos ensaios. Não pode ser músico, gestor ou administrador na mesma banda. \\ \hline
+Gestor de Banda & Primário & Músico & Músico com funcionalidades de gestão: eventos, sondagens, presenças e arquivo digital de peças. \\ \hline
+Administrador de Banda & Primário & Gestor de Banda & Gestor principal e representante da banda, responsável por convidar utilizadores e atribuir papéis. \\ \hline
+Fornecedor de identidade & Secundário & --- & Serviço externo (OpenID Connect) que autentica o utilizador e fornece a sua identidade. \\ \hline
+Serviço de Calendário & Secundário & --- & Serviço externo (Google Calendar ou Outlook Calendar) que recebe os eventos sincronizados pelo utilizador. \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Lista de Casos de Utilização}
+\begin{longtable}{|p{1.4cm}|p{5cm}|p{4.6cm}|p{2cm}|}
+\hline
+\textbf{ID} & \textbf{Caso de utilização} & \textbf{Atores} & \textbf{Requisito} \\ \hline
+\endhead
+% Sessão de utilizador
+UC01 & Autenticar & Utilizador, Fornecedor de identidade & RF01 \\ \hline
+UC02 & Terminar sessão & Utilizador & RF02 \\ \hline
+% Bandas
+UC03 & Criar banda & Utilizador & RF03 \\ \hline
+UC04 & Enviar convite de banda & Administrador de Banda & RF04 \\ \hline
+UC05 & Aceitar convite de banda & Utilizador & RF04 \\ \hline
+UC06 & Atribuir papel a um membro & Administrador de Banda & RF04 \\ \hline
+UC07 & Trocar de banda ativa & Membro de Banda & RF05 \\ \hline
+% Eventos
+UC08 & Criar evento (concerto ou ensaio remarcado) & Gestor de Banda & RF06 \\ \hline
+UC09 & Consultar eventos futuros & Membro de Banda & RF07 \\ \hline
+% Sondagens
+UC10 & Criar sondagem (concerto ou ensaio remarcado) & Gestor de Banda & RF08 \\ \hline
+UC11 & Fechar sondagem & Gestor de Banda & RF10 \\ \hline
+UC12 & Votar numa sondagem & Músico & RF09 \\ \hline
+UC13 & Consultar resultados de uma sondagem & Gestor de Banda, Maestro & RF11 \\ \hline
+% Ensaios
+UC14 & Registar presenças num ensaio & Gestor de Banda, Maestro & RF12 \\ \hline
+UC15 & Consultar assiduidade & Gestor de Banda, Maestro & RF13 \\ \hline
+UC16 & Criar sumário de ensaio & Maestro & RF14 \\ \hline
+UC17 & Consultar sumários de ensaios & Membro de Banda & RF15 \\ \hline
+% Peças musicais
+UC18 & Adicionar peça ao arquivo digital & Maestro & RF16 \\ \hline
+UC19 & Editar informação de uma peça & Maestro & RF16 \\ \hline
+UC20 & Consultar arquivo digital de peças & Membro de Banda & RF17 \\ \hline
+UC21 & Definir lista de peças de um concerto & Maestro & RF18 \\ \hline
+% Misc
+UC22 & Consultar painel da banda & Membro de Banda & RF19 \\ \hline
+% Calendário
+UC23 & Ligar aplicação de calendário & Membro de Banda, Serviço de Calendário & RF20 \\ \hline
+UC24 & Sincronizar evento com calendário & Membro de Banda, Serviço de Calendário & RF20 \\ \hline
+\end{longtable}
+
+\subsection{Diagrama de Casos de Utilização}
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio,frame]{use-cases/00-atores.pdf}
+\caption{Diagrama de casos de utilização: atores}
+\label{fig:uc-atores}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio,frame]{use-cases/01-visao-geral.pdf}
+\caption{Diagrama de casos de utilização: visão geral}
+\label{fig:uc-visao-geral}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio,frame]{use-cases/02-conta-bandas.pdf}
+\caption{Diagrama de casos de utilização: conta e bandas}
+\label{fig:uc-conta-bandas}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio,frame]{use-cases/03-eventos-sondagens.pdf}
+\caption{Diagrama de casos de utilização: eventos e sondagens}
+\label{fig:uc-eventos-sondagens}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio,frame]{use-cases/04-ensaios.pdf}
+\caption{Diagrama de casos de utilização: ensaios}
+\label{fig:uc-ensaios}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio,frame]{use-cases/05-repertorio.pdf}
+\caption{Diagrama de casos de utilização: repertório}
+\label{fig:uc-repertorio}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth,height=0.5\textheight,keepaspectratio,frame]{use-cases/06-painel-calendario.pdf}
+\caption{Diagrama de casos de utilização: painel e calendário}
+\label{fig:uc-painel-calendario}
+\end{figure}
+\clearpage
+
+\section{Descrição dos Casos de Utilização}
+\label{sec:descricao-casos-utilizacao}
+Apresentam-se os casos de utilização principais, com o respetivo fluxo principal e fluxos alternativos. A numeração dos passos alternativos indica o passo do fluxo principal em que ocorrem.
+
+\subsection{UC01 -- Autenticar}
+\begin{tabular}{|p{3.2cm}|p{11cm}|}
+\hline
+\textbf{Atores} & Utilizador (primário); Fornecedor de identidade (secundário) \\ \hline
+\textbf{Requisitos} & RF01, RNF10, RNF11 \\ \hline
+\textbf{Pré-condições} & O utilizador não tem sessão ativa e possui uma conta Google ou Microsoft. \\ \hline
+\textbf{Fluxo principal} &
+1. O utilizador acede à Plan-Scales e escolhe autenticar-se.\newline
+2. O sistema apresenta os fornecedores disponíveis (Google e Microsoft).\newline
+3. O utilizador escolhe um fornecedor.\newline
+4. O sistema redireciona o utilizador para o fornecedor de identidade.\newline
+5. O utilizador autentica-se junto do fornecedor e autoriza a partilha do nome e do \textit{email}.\newline
+6. O fornecedor devolve a identidade do utilizador ao sistema.\newline
+7. O sistema valida a identidade, reconhece o utilizador e inicia a sessão.\newline
+8. O sistema apresenta as bandas do utilizador. \\ \hline
+\textbf{Fluxos alternativos} &
+5a. O utilizador cancela ou recusa a autorização: o sistema regressa ao ecrã inicial e informa que a autenticação não foi concluída.\newline
+6a. O fornecedor está indisponível ou devolve um erro: o sistema informa o utilizador da falha e permite-lhe tentar novamente ou escolher outro fornecedor.\newline
+7a. A identidade devolvida não é válida (por exemplo, por ser uma resposta inválida ou expirada): o sistema rejeita-a, não inicia a sessão e informa o utilizador.\newline
+7b. Primeiro acesso: o sistema cria a conta com o nome e o \textit{email} fornecidos e continua no passo 8.\newline
+8a. O utilizador não pertence a nenhuma banda: o sistema oferece a possibilidade de criar uma banda (UC03) ou de aguardar um convite (UC05). \\ \hline
+\textbf{Pós-condições} & O utilizador tem uma sessão ativa. O sistema não armazena palavras-passe. \\ \hline
+\end{tabular}
+
+\subsection{UC10 -- Criar sondagem}
+\begin{tabular}{|p{3.2cm}|p{11cm}|}
+\hline
+\textbf{Ator} & Gestor de Banda (e, por herança, Administrador de Banda) \\ \hline
+\textbf{Requisitos} & RF08 \\ \hline
+\textbf{Pré-condições} & O gestor está autenticado e tem a banda ativa selecionada. \\ \hline
+\textbf{Fluxo principal} &
+1. O gestor escolhe criar uma sondagem.\newline
+2. O sistema pede o tipo (disponibilidade para concerto ou remarcação de ensaio), o título e as opções de data e hora.\newline
+3. O gestor preenche os dados e confirma.\newline
+4. O sistema valida os dados.\newline
+5. O sistema cria a sondagem no estado ativo e apresenta-a aos membros da banda.\newline
+6. O sistema confirma a criação ao gestor. \\ \hline
+\textbf{Fluxos alternativos} &
+3a. O gestor cancela: o sistema descarta os dados e não cria a sondagem.\newline
+4a. Os dados estão em falta ou são inválidos (por exemplo, menos de duas opções ou datas passadas): o sistema indica os campos a corrigir e regressa ao passo 2, mantendo os dados já introduzidos.\newline
+4b. Já existe uma sondagem ativa com o mesmo título e tipo: o sistema avisa o gestor e pede confirmação antes de criar a sondagem. \\ \hline
+\textbf{Pós-condições} & Existe uma sondagem ativa associada à banda, na qual os músicos podem votar (UC11). \\ \hline
+\end{tabular}
+
+\subsection{UC11 -- Votar numa sondagem}
+\begin{tabular}{|p{3.2cm}|p{11cm}|}
+\hline
+\textbf{Ator} & Músico (e, por herança, Gestor de Banda e Administrador de Banda) \\ \hline
+\textbf{Requisitos} & RF09, RNF01 \\ \hline
+\textbf{Pré-condições} & O músico está autenticado, pertence à banda e existe uma sondagem ativa. \\ \hline
+\textbf{Fluxo principal} &
+1. O músico abre a lista de sondagens ativas.\newline
+2. O sistema apresenta a sondagem e as respetivas opções.\newline
+3. O músico seleciona uma opção e confirma.\newline
+4. O sistema regista o voto e confirma. \\ \hline
+\textbf{Fluxos alternativos} &
+2a. O músico já votou: o sistema apresenta o voto atual. O músico escolhe outra opção e confirma, e o sistema substitui o voto anterior.\newline
+4a. A sondagem foi entretanto fechada: o sistema informa o músico, não regista o voto e apresenta o resultado final.\newline
+4b. Falha ao registar o voto: o sistema informa o músico e mantém o voto anterior, se existir. \\ \hline
+\textbf{Pós-condições} & O voto do músico fica associado à sondagem. Cada músico tem, no máximo, um voto por sondagem. \\ \hline
+\end{tabular}
+
+\subsection{UC12 -- Fechar sondagem}
+\begin{tabular}{|p{3.2cm}|p{11cm}|}
+\hline
+\textbf{Ator} & Gestor de Banda (e, por herança, Administrador de Banda) \\ \hline
+\textbf{Requisitos} & RF10, RF06 \\ \hline
+\textbf{Inclui} & UC08 -- Criar evento \\ \hline
+\textbf{Pré-condições} & O gestor está autenticado, tem a banda ativa selecionada e existe uma sondagem ativa nessa banda. \\ \hline
+\textbf{Fluxo principal} &
+1. O gestor abre uma sondagem ativa e escolhe fechá-la.\newline
+2. O sistema apresenta os resultados atuais (votos por opção e disponibilidade de cada músico).\newline
+3. O gestor seleciona a opção vencedora e confirma o fecho.\newline
+4. O sistema fecha a sondagem, impedindo novos votos e alterações.\newline
+5. O sistema cria o evento correspondente à opção vencedora (UC08), do tipo concerto ou ensaio remarcado, com a data e a hora escolhidas.\newline
+6. O sistema confirma o fecho e apresenta o evento criado, que passa a constar dos eventos futuros da banda. \\ \hline
+\textbf{Fluxos alternativos} &
+3a. O gestor cancela: a sondagem mantém-se ativa e nada é alterado.\newline
+3b. Há empate entre opções: o sistema assinala o empate e o gestor escolhe a opção vencedora.\newline
+3c. A sondagem não tem votos: o sistema avisa o gestor, que pode cancelar ou fechar a sondagem sem criar um evento.\newline
+3d. O gestor fecha a sondagem sem selecionar uma opção vencedora: o sistema fecha-a sem criar um evento.\newline
+4a. A sondagem já foi entretanto fechada (por outro gestor): o sistema informa o gestor e apresenta o estado atual da sondagem.\newline
+5a. Falha na criação do evento: o sistema informa o gestor, mantém a sondagem ativa e não altera nenhum dado. \\ \hline
+\textbf{Pós-condições} & A sondagem fica fechada e os votos deixam de poder ser alterados. Se foi escolhida uma opção, existe um evento futuro da banda, que os membros podem sincronizar com o seu calendário (UC24). \\ \hline
+\end{tabular}
+
+\subsection{UC24 -- Sincronizar evento com calendário}
+\begin{tabular}{|p{3.2cm}|p{11cm}|}
+\hline
+\textbf{Atores} & Membro de Banda (primário); Serviço de Calendário (secundário) \\ \hline
+\textbf{Requisitos} & RF20, RNF09 e a restrição de integração com calendários \\ \hline
+\textbf{Pré-condições} & O membro está autenticado e já ligou uma aplicação de calendário (UC23). Existe um evento futuro da banda, por exemplo criado após o fecho de uma sondagem (UC12). \\ \hline
+\textbf{Fluxo principal} &
+1. O membro seleciona um evento futuro e escolhe sincronizá-lo com o seu calendário.\newline
+2. O sistema envia ao serviço de calendário o pedido de criação do evento (título, data, hora e banda).\newline
+3. O serviço de calendário cria o evento e confirma.\newline
+4. O sistema regista o evento como sincronizado e informa o membro. \\ \hline
+\textbf{Fluxos alternativos} &
+1a. O membro não tem um calendário ligado: o sistema oferece a possibilidade de ligar um (UC23) e, concluída a ligação, retoma no passo 2.\newline
+2a. A autorização expirou ou foi revogada: o sistema pede nova autorização ao membro e, se esta for concedida, retoma no passo 2. Se o membro recusar, o evento não é sincronizado.\newline
+3a. O serviço de calendário está indisponível ou devolve um erro: o sistema informa o membro, mantém o evento como não sincronizado e permite tentar mais tarde. As restantes funcionalidades não são afetadas.\newline
+4a. O evento já foi sincronizado anteriormente: o sistema atualiza o evento existente em vez de criar um duplicado. \\ \hline
+\textbf{Pós-condições} & O evento consta do calendário do membro e fica marcado como sincronizado. \\ \hline
+\end{tabular}
