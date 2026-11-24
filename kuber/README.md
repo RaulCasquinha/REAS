@@ -1,9 +1,8 @@
 # Kubernetes Lab — Ubuntu Guide
 
-Deploys the Google Online Boutique microservices demo on a local Minikube cluster and exercises
-manual scaling, HPA, rolling updates, service discovery, and self-healing. Full write-up in
-[`../docs/report/template.tex`](../docs/report/template.tex) (`Results → Kubernetes`); raw logs in
-`lab_output_*.log`.
+Deploys Google Online Boutique on Minikube. Covers manual scaling, HPA, rolling updates, service
+discovery, self-healing. Report write-up: `../docs/report/template.tex` (`Results → Kubernetes`).
+Raw logs: `lab_output_*.log`.
 
 ```mermaid
 flowchart TB

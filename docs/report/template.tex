@@ -156,7 +156,22 @@ adservice) plus the \texttt{redis-cart} cache and the built-in \texttt{loadgener
 is deployed via a \texttt{Deployment} + \texttt{Service} pair from the upstream manifests
 (\texttt{release/kubernetes-manifests.yaml}); \texttt{frontend} is exposed both internally
 (\texttt{ClusterIP}, port 80 → 8080) and externally via \texttt{frontend-external}
-(\texttt{LoadBalancer}, which Minikube resolves to a NodePort).
+(\texttt{LoadBalancer}, which Minikube resolves to a NodePort). All 12 pods reach \texttt{Running}
+after \texttt{kubectl apply}:
+
+\begin{verbatim}
+$ kubectl get pods
+NAME                            READY  STATUS   AGE
+adservice-957f96f7d-bn4wx       1/1    Running  53m
+currencyservice-d49b9844d-...   1/1    Running  53m
+frontend-7f5f76b5ff-5x8q5       1/1    Running  53m
+...(12 pods total)
+
+$ kubectl get services
+NAME                 TYPE          CLUSTER-IP      PORT(S)
+frontend             ClusterIP     10.99.21.211    80/TCP
+frontend-external    LoadBalancer  10.108.209.86   80:31028/TCP
+\end{verbatim}
 
 \subsubsection{Manifests}
 
@@ -167,6 +182,14 @@ of the \emph{requested} amount. \texttt{frontend} uses an HTTP \texttt{\_healthz
 8080 and the same resource envelope. The \texttt{boutique-ingress.yaml} manifest
 (\texttt{kuber/boutique-ingress.yaml}) routes \texttt{reas-g04.dyn.fil.isel.pt} to the
 \texttt{frontend} service through the Nginx ingress controller addon.
+
+\begin{verbatim}
+$ kubectl get deployment currencyservice -o jsonpath='{...resources}' | jq
+{ "limits":   {"cpu": "200m", "memory": "128Mi"},
+  "requests": {"cpu": "100m", "memory": "64Mi"} }
+\end{verbatim}
+This is what the HPA reads: 50\% target means "scale when average CPU use across pods passes
+50m" (50\% of the 100m request), not 50\% of a core.
 
 \subsubsection{Scaling experiments}
 
@@ -209,6 +232,14 @@ sustained USERS=200 load during a 60-second watch window. No flapping (rapid sca
 observed in this run — the single scale-up event was stable for the remainder of the experiment,
 consistent with HPA's default stabilization window damping reactions to transient spikes.
 
+\begin{verbatim}
+$ kubectl get hpa currencyservice-hpa
+NAME                  REFERENCE                    TARGETS       REPLICAS
+currencyservice-hpa   Deployment/currencyservice   cpu: 33%/50%  2
+\end{verbatim}
+Snapshot right after the scale-up: CPU dropped below target because load is now split across
+2 pods instead of 1.
+
 \subsubsection{Rolling update and rollback}
 
 \texttt{frontend} was rolled from \texttt{v0.10.4} (revision 1) to \texttt{v0.10.2} (revision 2) via
@@ -217,6 +248,14 @@ consistent with HPA's default stabilization window damping reactions to transien
 rolling replacement. \texttt{kubectl rollout undo} then reverted to \texttt{v0.10.4} as revision 3,
 again completing with ``successfully rolled out''. Revision numbers increased monotonically
 (1 → 2 → 3) as expected, confirming Kubernetes never reuses a revision number even on rollback.
+
+\begin{verbatim}
+$ kubectl rollout status deployment/frontend
+Waiting for deployment "frontend" rollout to finish: 1 old replicas are pending termination...
+deployment "frontend" successfully rolled out
+\end{verbatim}
+The old pod stays up until the new one passes its readiness probe — this is the zero-downtime
+part: there's no window where the service has zero ready backends.
 
 \subsubsection{Operational capabilities}
 
@@ -228,6 +267,14 @@ intervention. \textbf{Service discovery:} \texttt{kubectl exec ... redis-cart --
 productcatalogservice} successfully resolved \texttt{productcatalogservice.default.svc.cluster.local}
 to its ClusterIP (\texttt{10.110.139.60}) via CoreDNS — the preceding NXDOMAIN lines are just the
 shell's DNS search-domain probing of shorter names and not a discovery failure.
+
+\begin{verbatim}
+$ kubectl exec deployment/redis-cart -- nslookup productcatalogservice
+Name:    productcatalogservice.default.svc.cluster.local
+Address: 10.110.139.60
+\end{verbatim}
+Resolution by service name alone, no IP hardcoded anywhere in \texttt{frontend}'s config — this
+is what lets pods move/restart/reschedule without breaking who-talks-to-whom.
 
 \subsubsection{Kubernetes vs Docker Compose}
 
@@ -250,21 +297,24 @@ this subsection documents the automation built for this chapter rather than capt
 numbers from this section are fabricated.
 
 \texttt{servicemesh/run-lab.sh} (with matching \texttt{README.md}/\texttt{README-nixos.md}/
-\texttt{shell.nix}) mirrors \texttt{kuber/run-lab.sh}'s structure and automates the full Istio
-chapter of the brief in 8 stages: (1) Istio install (\texttt{profile=demo}) and sidecar-injection
-verification; (2) restarting Online Boutique deployments to confirm 2/2 (app + \texttt{istio-proxy})
-pods; (3) external access via \texttt{frontend-gateway.yaml} (Istio \texttt{Gateway} +
-\texttt{VirtualService}), replacing the Nginx ingress forwarding used in the Kubernetes chapter;
-(4) the Grafana/Prometheus/Jaeger/Kiali observability add-ons, including registering the Jaeger
-tracing provider; (5) traffic management — least-request load balancing on \texttt{currencyservice}
-(\texttt{currencyservice-lb.yaml}) and a canary \texttt{frontend} v1/v2 deployment stepped through
-90/10 → 50/50 → 100/0 traffic splits; (6) mTLS (PERMISSIVE → STRICT) and an
-\texttt{AuthorizationPolicy} restricting \texttt{productcatalogservice} access to \texttt{frontend}
-only; (7) fault injection (5s delay on 50\% of \texttt{currencyservice} calls, 503 abort on 30\% of
-mesh-internal \texttt{frontend} traffic) and an aggressive \texttt{frontend} circuit breaker
-triggered under resource starvation + \texttt{USERS=200} load; (8) performance-overhead capture
-(\texttt{kubectl top pods --containers}, Istio control-plane cost, and the Grafana PromQL queries
-needed to compare PERMISSIVE vs STRICT mTLS latency).
+\texttt{shell.nix}) mirrors \texttt{kuber/run-lab.sh}'s structure and follows the brief's Service
+Mesh chapter section-by-section, 9 stages: (1) Istio install (\texttt{profile=demo}); (2) sidecar
+injection, restarting Online Boutique deployments to confirm 2/2 (app + \texttt{istio-proxy}) pods;
+(3) external access — iptables forwarding to the Istio ingress gateway's NodePort, replacing the
+Nginx ingress forwarding from the Kubernetes chapter; (4) \texttt{frontend-gateway.yaml} (Istio
+\texttt{Gateway} + \texttt{VirtualService}); (5) the Grafana/Prometheus/Jaeger/Kiali observability
+add-ons, including registering the Jaeger tracing provider; (6) traffic management — least-request
+load balancing on \texttt{currencyservice} and a canary \texttt{frontend} v1/v2 deployment stepped
+through 90/10 → 50/50 → 100/0 traffic splits; (7) security — cert verification, mTLS
+(PERMISSIVE → STRICT), an \texttt{AuthorizationPolicy} restricting \texttt{productcatalogservice}
+to \texttt{frontend} only, and a default-deny demonstration; (8) fault injection (5s delay on 50\%
+of \texttt{currencyservice} calls, 503 abort on 30\% of mesh-internal \texttt{frontend} traffic)
+and an aggressive \texttt{frontend} circuit breaker triggered under resource starvation +
+\texttt{USERS=200} load; (9) performance analysis — baseline vs STRICT-mTLS resource/latency
+comparison, sidecar overhead (\texttt{kubectl top pods --containers}), a 7-way traffic-management
+overhead comparison (baseline, simple routing, canary, circuit breaker, round-robin/least-request/
+random load balancing — the exact comparison table the brief asks for), control-plane cost, and a
+Jaeger latency-breakdown pass.
 
 Once run on the lab VM, this script will produce a \texttt{lab\_output\_*.log} analogous to the
 Kubernetes chapter's, from which the sidecar-overhead, mTLS-latency, canary-split, and

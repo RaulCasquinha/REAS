@@ -2,10 +2,8 @@
 
 **Redes de Entrega de Aplicações e Serviços**
 
-Coursework deliverable: progressively build an applications/services delivery stack — from a
-single web server, through load-balanced/clustered WordPress, to a Kubernetes-orchestrated
-microservices app, to a full Istio service mesh on top of it. Full assignment brief:
-[`docs/work/work_instructions.md`](docs/work/work_instructions.md).
+Three chapters, each building on the last: WordPress load balancing → Kubernetes orchestration →
+Istio service mesh. Brief: [`docs/work/work_instructions.md`](docs/work/work_instructions.md).
 
 ```mermaid
 flowchart TD
@@ -48,8 +46,7 @@ flowchart TD
 | [`docs/work/`](docs/work/README.md) | Assignment brief | — |
 | [`docs/report/`](docs/report/README.md) | Written report (LaTeX) | In progress |
 
-Each folder above has its own `README.md` with setup/usage instructions, and most have a
-`README-nixos.md` + `shell.nix` for NixOS users.
+Each folder has its own `README.md`, and most have `README-nixos.md` + `shell.nix`.
 
 ## Quick start
 

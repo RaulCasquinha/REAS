@@ -1,9 +1,13 @@
 # Service Mesh (Istio) Lab — Ubuntu Guide
 
-Layers Istio on top of the Kubernetes lab's Online Boutique deployment: Envoy sidecars, traffic
-management, mTLS, authorization policies, observability, fault injection, and circuit breaking.
-Status: scripted (`run-lab.sh`), not yet executed — see
-[`../docs/report/template.tex`](../docs/report/template.tex) (`Results → Service Mesh`).
+Installs Istio on top of the Kubernetes lab's cluster: sidecars, traffic management, mTLS, authz
+policies, observability, fault injection, circuit breaking. Status: scripted, not yet run. Report:
+`../docs/report/template.tex` (`Results → Service Mesh`).
+
+`run-lab.sh` stops at every point that needs a human look at Kiali/Grafana/Jaeger (mTLS padlocks,
+traffic-split percentages, latency spikes, ejection graphs, etc.) — it prompts for what you saw
+and writes it into the log, so those GUI-only observations end up in the same file as the command
+output instead of getting lost.
 
 ```mermaid
 flowchart TB

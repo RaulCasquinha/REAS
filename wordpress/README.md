@@ -56,6 +56,14 @@ It lists the configs above, you pick one by number, and it handles `docker compo
 copy / `docker compose up -d` for you. The currently-active config is tracked in
 `active/.current-config`.
 
+Once a config is active, use `cluster.sh` to start/stop it without switching:
+
+```bash
+./cluster.sh start    # docker compose up -d on active/
+./cluster.sh kill     # docker compose down -v on active/ (drops volumes)
+./cluster.sh status   # docker compose ps on active/
+```
+
 ---
 
 ## 2. Benchmarking with JMeter

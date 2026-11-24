@@ -13,7 +13,7 @@ spec:
       abort:
         percentage:
           value: 30
-          httpStatus: 503
+        httpStatus: 503
     route:
     - destination:
         host: frontend
