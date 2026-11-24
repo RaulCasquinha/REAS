@@ -1,0 +1,407 @@
+=== REAS Kubernetes Lab ===
+Date: Mon Nov  2 16:36:13 UTC 2026
+Host: reas-g04.dyn.fil.isel.pt
+
+
+[0;32m═══ 1 · START CLUSTER ═══[0m
+
+$ minikube start --driver=docker --cpus=4 --memory=8192
+* minikube v1.39.0 on Ubuntu 24.04 (amd64)
+* Using the docker driver based on existing profile
+* Starting "minikube" primary control-plane node in "minikube" cluster
+* Pulling base image v0.0.51 ...
+* Preparing Kubernetes v1.37.0 on containerd 2.3.4 ...
+* Verifying Kubernetes components...
+  - Using image registry.k8s.io/ingress-nginx/controller:v1.15.1
+  - Using image registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.9
+  - Using image registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.9
+  - Using image gcr.io/k8s-minikube/storage-provisioner:v5
+* Verifying ingress addon...
+* Enabled addons: storage-provisioner, ingress, default-storageclass
+* Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default
+
+$ kubectl cluster-info
+Kubernetes control plane is running at https://192.168.49.2:8443
+CoreDNS is running at https://192.168.49.2:8443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+
+$ kubectl get nodes
+NAME       STATUS   ROLES           AGE   VERSION
+minikube   Ready    control-plane   23m   v1.37.0
+
+$ kubectl get pods -n kube-system
+NAME                               READY   STATUS    RESTARTS   AGE
+coredns-559f6c778d-822rd           1/1     Running   0          23m
+etcd-minikube                      1/1     Running   0          23m
+kindnet-ftnsz                      1/1     Running   0          23m
+kube-apiserver-minikube            1/1     Running   0          23m
+kube-controller-manager-minikube   1/1     Running   0          23m
+kube-proxy-wst5c                   1/1     Running   0          23m
+kube-scheduler-minikube            1/1     Running   0          23m
+storage-provisioner                1/1     Running   0          23m
+
+[0;32m═══ 2 · DEPLOY GOOGLE ONLINE BOUTIQUE ═══[0m
+  (git clone skipped – directory exists)
+
+$ kubectl apply -f /home/student/REAS/kuber/microservices-demo/release/kubernetes-manifests.yaml
+deployment.apps/currencyservice unchanged
+service/currencyservice unchanged
+serviceaccount/currencyservice unchanged
+deployment.apps/loadgenerator unchanged
+serviceaccount/loadgenerator unchanged
+deployment.apps/productcatalogservice unchanged
+service/productcatalogservice unchanged
+serviceaccount/productcatalogservice unchanged
+deployment.apps/checkoutservice unchanged
+service/checkoutservice unchanged
+serviceaccount/checkoutservice unchanged
+deployment.apps/shippingservice unchanged
+service/shippingservice unchanged
+serviceaccount/shippingservice unchanged
+deployment.apps/cartservice unchanged
+service/cartservice unchanged
+serviceaccount/cartservice unchanged
+deployment.apps/redis-cart unchanged
+service/redis-cart unchanged
+deployment.apps/emailservice unchanged
+service/emailservice unchanged
+serviceaccount/emailservice unchanged
+deployment.apps/paymentservice unchanged
+service/paymentservice unchanged
+serviceaccount/paymentservice unchanged
+deployment.apps/frontend unchanged
+service/frontend unchanged
+service/frontend-external unchanged
+serviceaccount/frontend unchanged
+deployment.apps/recommendationservice unchanged
+service/recommendationservice unchanged
+serviceaccount/recommendationservice unchanged
+deployment.apps/adservice unchanged
+service/adservice unchanged
+serviceaccount/adservice unchanged
+
+$ kubectl wait --for=condition=ready pod --all --timeout=300s
+pod/adservice-957f96f7d-bn4wx condition met
+pod/cartservice-58b95597cf-2fvxl condition met
+pod/checkoutservice-687c78c598-s47pg condition met
+pod/currencyservice-d49b9844d-nwqhq condition met
+pod/emailservice-796765984-d8qbd condition met
+pod/frontend-7f5f76b5ff-5x8q5 condition met
+pod/loadgenerator-74c4986859-vdgc9 condition met
+pod/paymentservice-66b7c67bd4-bhjh5 condition met
+pod/productcatalogservice-67849487f4-9jj55 condition met
+pod/recommendationservice-76558856fb-8jg9m condition met
+pod/redis-cart-6fdc7894b7-krbvd condition met
+pod/shippingservice-799854c9b8-7k2vh condition met
+
+$ kubectl get pods
+NAME                                     READY   STATUS    RESTARTS   AGE
+adservice-957f96f7d-bn4wx                1/1     Running   0          23m
+cartservice-58b95597cf-2fvxl             1/1     Running   0          23m
+checkoutservice-687c78c598-s47pg         1/1     Running   0          23m
+currencyservice-d49b9844d-nwqhq          1/1     Running   0          23m
+emailservice-796765984-d8qbd             1/1     Running   0          23m
+frontend-7f5f76b5ff-5x8q5                1/1     Running   0          23m
+loadgenerator-74c4986859-vdgc9           1/1     Running   0          23m
+paymentservice-66b7c67bd4-bhjh5          1/1     Running   0          23m
+productcatalogservice-67849487f4-9jj55   1/1     Running   0          23m
+recommendationservice-76558856fb-8jg9m   1/1     Running   0          23m
+redis-cart-6fdc7894b7-krbvd              1/1     Running   0          23m
+shippingservice-799854c9b8-7k2vh         1/1     Running   0          23m
+
+$ kubectl get services
+NAME                    TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+adservice               ClusterIP      10.99.134.205    <none>        9555/TCP       23m
+cartservice             ClusterIP      10.109.113.137   <none>        7070/TCP       23m
+checkoutservice         ClusterIP      10.107.63.188    <none>        5050/TCP       23m
+currencyservice         ClusterIP      10.101.6.119     <none>        7000/TCP       23m
+emailservice            ClusterIP      10.106.183.137   <none>        5000/TCP       23m
+frontend                ClusterIP      10.99.21.211     <none>        80/TCP         23m
+frontend-external       LoadBalancer   10.108.209.86    <pending>     80:31028/TCP   23m
+kubernetes              ClusterIP      10.96.0.1        <none>        443/TCP        24m
+paymentservice          ClusterIP      10.107.68.131    <none>        50051/TCP      23m
+productcatalogservice   ClusterIP      10.110.139.60    <none>        3550/TCP       23m
+recommendationservice   ClusterIP      10.106.45.176    <none>        8080/TCP       23m
+redis-cart              ClusterIP      10.111.1.177     <none>        6379/TCP       23m
+shippingservice         ClusterIP      10.103.253.198   <none>        50051/TCP      23m
+
+$ minikube service frontend-external
+┌───────────┬───────────────────┬─────────────┬───────────────────────────┐
+│ NAMESPACE │       NAME        │ TARGET PORT │            URL            │
+├───────────┼───────────────────┼─────────────┼───────────────────────────┤
+│ default   │ frontend-external │ http/80     │ http://192.168.49.2:31028 │
+└───────────┴───────────────────┴─────────────┴───────────────────────────┘
+* Opening service default/frontend-external in default browser...
+  http://192.168.49.2:31028
+
+[0;32m═══ 3 · EXPLORE DEPLOYMENT ═══[0m
+
+$ kubectl get pods -o wide
+NAME                                     READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+adservice-957f96f7d-bn4wx                1/1     Running   0          23m   10.244.0.14   minikube   <none>           <none>
+cartservice-58b95597cf-2fvxl             1/1     Running   0          23m   10.244.0.8    minikube   <none>           <none>
+checkoutservice-687c78c598-s47pg         1/1     Running   0          23m   10.244.0.6    minikube   <none>           <none>
+currencyservice-d49b9844d-nwqhq          1/1     Running   0          23m   10.244.0.3    minikube   <none>           <none>
+emailservice-796765984-d8qbd             1/1     Running   0          23m   10.244.0.10   minikube   <none>           <none>
+frontend-7f5f76b5ff-5x8q5                1/1     Running   0          23m   10.244.0.12   minikube   <none>           <none>
+loadgenerator-74c4986859-vdgc9           1/1     Running   0          23m   10.244.0.4    minikube   <none>           <none>
+paymentservice-66b7c67bd4-bhjh5          1/1     Running   0          23m   10.244.0.11   minikube   <none>           <none>
+productcatalogservice-67849487f4-9jj55   1/1     Running   0          23m   10.244.0.5    minikube   <none>           <none>
+recommendationservice-76558856fb-8jg9m   1/1     Running   0          23m   10.244.0.13   minikube   <none>           <none>
+redis-cart-6fdc7894b7-krbvd              1/1     Running   0          23m   10.244.0.9    minikube   <none>           <none>
+shippingservice-799854c9b8-7k2vh         1/1     Running   0          23m   10.244.0.7    minikube   <none>           <none>
+
+$ kubectl get deployment currencyservice -o yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"currencyservice"},"name":"currencyservice","namespace":"default"},"spec":{"selector":{"matchLabels":{"app":"currencyservice"}},"template":{"metadata":{"labels":{"app":"currencyservice"}},"spec":{"containers":[{"env":[{"name":"PORT","value":"7000"},{"name":"DISABLE_PROFILER","value":"1"}],"image":"us-central1-docker.pkg.dev/google-samples/microservices-demo/currencyservice:v0.10.4","livenessProbe":{"grpc":{"port":7000}},"name":"server","ports":[{"containerPort":7000,"name":"grpc"}],"readinessProbe":{"grpc":{"port":7000}},"resources":{"limits":{"cpu":"200m","memory":"128Mi"},"requests":{"cpu":"100m","memory":"64Mi"}},"securityContext":{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"privileged":false,"readOnlyRootFilesystem":true}}],"securityContext":{"fsGroup":1000,"runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000},"serviceAccountName":"currencyservice","terminationGracePeriodSeconds":5}}}}
+  creationTimestamp: "2026-11-02T16:13:29Z"
+  generation: 1
+  labels:
+    app: currencyservice
+  name: currencyservice
+  namespace: default
+  resourceVersion: "810"
+  uid: be9afacf-b496-454d-ac11-6f5b79edf6bd
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: currencyservice
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: currencyservice
+    spec:
+      containers:
+      - env:
+        - name: PORT
+          value: "7000"
+        - name: DISABLE_PROFILER
+          value: "1"
+        image: us-central1-docker.pkg.dev/google-samples/microservices-demo/currencyservice:v0.10.4
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          grpc:
+            port: 7000
+            service: ""
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: server
+        ports:
+        - containerPort: 7000
+          name: grpc
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          grpc:
+            port: 7000
+            service: ""
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: 200m
+            memory: 128Mi
+          requests:
+            cpu: 100m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      serviceAccount: currencyservice
+      serviceAccountName: currencyservice
+      terminationGracePeriodSeconds: 5
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2026-11-02T16:13:55Z"
+    lastUpdateTime: "2026-11-02T16:13:55Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  - lastTransitionTime: "2026-11-02T16:13:29Z"
+    lastUpdateTime: "2026-11-02T16:13:55Z"
+    message: ReplicaSet "currencyservice-d49b9844d" has successfully progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  observedGeneration: 1
+  readyReplicas: 1
+  replicas: 1
+  terminatingReplicas: 0
+  updatedReplicas: 1
+
+$ kubectl get deployment currencyservice -o jsonpath='{.spec.replicas}'
+1
+$ kubectl get deployment currencyservice -o jsonpath='{.spec.template.spec.containers[0].resources}' | jq
+./run-lab.sh: line 46: jq: command not found
+
+$ kubectl get deployment currencyservice -o jsonpath='{.spec.template.spec.containers[0].image}'
+us-central1-docker.pkg.dev/google-samples/microservices-demo/currencyservice:v0.10.4
+$ kubectl get service frontend -o yaml
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"app":"frontend"},"name":"frontend","namespace":"default"},"spec":{"ports":[{"name":"http","port":80,"targetPort":8080}],"selector":{"app":"frontend"},"type":"ClusterIP"}}
+  creationTimestamp: "2026-11-02T16:13:29Z"
+  labels:
+    app: frontend
+  name: frontend
+  namespace: default
+  resourceVersion: "620"
+  uid: a185105e-9105-4418-a0b8-355300cd85b5
+spec:
+  clusterIP: 10.99.21.211
+  clusterIPs:
+  - 10.99.21.211
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: frontend
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
+
+$ kubectl describe service frontend
+Name:                     frontend
+Namespace:                default
+Labels:                   app=frontend
+Annotations:              <none>
+Selector:                 app=frontend
+Type:                     ClusterIP
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.99.21.211
+IPs:                      10.99.21.211
+Port:                     http  80/TCP
+TargetPort:               8080/TCP
+Endpoints:                10.244.0.12:8080
+Session Affinity:         None
+Internal Traffic Policy:  Cluster
+Events:                   <none>
+
+[0;32m═══ 4 · EXTERNAL ACCESS — INGRESS ═══[0m
+
+$ minikube addons enable ingress
+* ingress is an addon maintained by Kubernetes. For any concerns contact minikube on GitHub.
+You can view the list of minikube maintainers at: https://github.com/kubernetes/minikube/blob/master/OWNERS
+  - Using image registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.9
+  - Using image registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.9
+  - Using image registry.k8s.io/ingress-nginx/controller:v1.15.1
+* Verifying ingress addon...
+* The 'ingress' addon is enabled
+  (boutique-ingress.yaml written for host: reas-g04.dyn.fil.isel.pt)
+
+$ kubectl apply -f boutique-ingress.yaml
+ingress.networking.k8s.io/boutique-ingress unchanged
+
+$ kubectl describe ingress boutique-ingress
+Name:             boutique-ingress
+Labels:           <none>
+Namespace:        default
+Address:          192.168.49.2
+Ingress Class:    nginx
+Default backend:  <default>
+Rules:
+  Host                      Path  Backends
+  ----                      ----  --------
+  reas-g04.dyn.fil.isel.pt  
+                            /   frontend:80 (10.244.0.12:8080)
+Annotations:                nginx.ingress.kubernetes.io/proxy-body-size: 50m
+                            nginx.ingress.kubernetes.io/proxy-read-timeout: 600
+                            nginx.ingress.kubernetes.io/proxy-send-timeout: 600
+Events:
+  Type    Reason  Age                    From                      Message
+  ----    ------  ----                   ----                      -------
+  Normal  Sync    5m31s (x2 over 6m15s)  nginx-ingress-controller  Scheduled for sync
+
+$ kubectl get svc -n ingress-nginx
+NAME                                 TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+ingress-nginx-controller             NodePort    10.103.103.59    <none>        80:32554/TCP,443:30306/TCP   6m50s
+ingress-nginx-controller-admission   ClusterIP   10.104.102.193   <none>        443/TCP                      6m50s
+
+$ minikube ip
+192.168.49.2
+
+$ sudo iptables -t nat -I PREROUTING 1 -p tcp --dport 80 -j DNAT --to-destination 192.168.49.2:80
+
+$ sudo iptables -I FORWARD 1 -p tcp -d 192.168.49.2 --dport 80 -j ACCEPT
+
+$ sudo sh -c 'echo 1 > /proc/sys/net/ipv4/ip_forward'
+
+$ sudo apt install -y iptables-persistent
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...
+Waiting for cache lock: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process 35631 (apt)...

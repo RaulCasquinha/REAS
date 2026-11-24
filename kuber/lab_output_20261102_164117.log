@@ -1,0 +1,12 @@
+=== REAS Kubernetes Lab ===
+Date: Mon Nov  2 16:41:22 UTC 2026
+Host: reas-g04.dyn.fil.isel.pt
+
+
+[0;32m═══ 1 · START CLUSTER ═══[0m
+
+$ minikube start --driver=docker --cpus=4 --memory=8192
+* minikube v1.39.0 on Ubuntu 24.04 (amd64)
+* Using the docker driver based on existing profile
+* Starting "minikube" primary control-plane node in "minikube" cluster
+* Pulling base image v0.0.51 ...

@@ -1,0 +1,16 @@
+=== REAS Kubernetes Lab ===
+Date: Mon Nov  2 16:08:19 UTC 2026
+Host: reas-g04.dyn.fil.isel.pt
+
+
+[0;32m═══ 1 · START CLUSTER ═══[0m
+
+$ minikube start --driver=docker --cpus=4 --memory=8192
+./run-lab.sh: line 46: minikube: command not found
+
+$ kubectl cluster-info
+./run-lab.sh: line 46: kubectl: command not found
+
+$ kubectl get nodes
+
+=== session ended by user ===

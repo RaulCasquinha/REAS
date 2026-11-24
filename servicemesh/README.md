@@ -1,5 +1,41 @@
 # Service Mesh (Istio) Lab — Ubuntu Guide
 
+Layers Istio on top of the Kubernetes lab's Online Boutique deployment: Envoy sidecars, traffic
+management, mTLS, authorization policies, observability, fault injection, and circuit breaking.
+Status: scripted (`run-lab.sh`), not yet executed — see
+[`../docs/report/template.tex`](../docs/report/template.tex) (`Results → Service Mesh`).
+
+```mermaid
+flowchart TB
+    Client["Browser<br/>reas-gNN.dyn.fil.isel.pt"] --> Gateway["Istio Ingress Gateway<br/>(Envoy)"]
+    Gateway -->|frontend-gateway.yaml| VS["VirtualService: frontend"]
+    VS --> FESidecar["Envoy sidecar"] --> FE["frontend"]
+
+    FE -->|mTLS| CurSidecar["Envoy sidecar"] --> Cur["currencyservice"]
+    FE -->|mTLS| PCSidecar["Envoy sidecar"] --> PC["productcatalogservice"]
+
+    DR["DestinationRule: currencyservice<br/>LEAST_REQUEST + connectionPool"] -.-> CurSidecar
+
+    subgraph ControlPlane["istio-system"]
+        Istiod["istiod<br/>(control plane)"]
+    end
+    Istiod -.configures.-> FESidecar
+    Istiod -.configures.-> CurSidecar
+    Istiod -.configures.-> PCSidecar
+
+    subgraph Observability["observability add-ons"]
+        Prom["Prometheus"]
+        Graf["Grafana"]
+        Kiali["Kiali"]
+        Jaeger["Jaeger"]
+    end
+    FESidecar -.metrics/traces.-> Prom
+    CurSidecar -.metrics/traces.-> Prom
+    Prom --> Graf
+    Prom --> Kiali
+    FESidecar -.spans.-> Jaeger
+```
+
 ## Prerequisites
 
 - The Kubernetes lab (`kuber/run-lab.sh`, sections 1-2) already run: a minikube cluster with
