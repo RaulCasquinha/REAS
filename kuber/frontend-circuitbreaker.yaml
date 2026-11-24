@@ -1,0 +1,22 @@
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: frontend-circuit-breaker
+  namespace: default
+spec:
+  host: frontend
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 1
+      http:
+        http1MaxPendingRequests: 1
+        http2MaxRequests: 1
+        maxRequestsPerConnection: 1
+      outlierDetection:
+        consecutive5xxErrors: 1
+        consecutiveGatewayErrors: 1
+        interval: 1s
+        baseEjectionTime: 180s
+        maxEjectionPercent: 100
+        minHealthPercent: 0

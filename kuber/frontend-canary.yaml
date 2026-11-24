@@ -1,0 +1,43 @@
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: frontend
+  namespace: default
+spec:
+  host: frontend
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: frontend-canary
+  namespace: default
+spec:
+  hosts:
+  - frontend
+  http:
+  - match:
+    - headers:
+        user-agent:
+          regex: ".*Mobile.*"
+    route:
+    - destination:
+        host: frontend
+        subset: v1
+      weight: 50
+    - destination:
+        host: frontend
+        subset: v1
+      weight: 50
+  - route:
+    - destination:
+        host: frontend
+        subset: v1
+      weight: 90
+    - destination:
+        host: frontend
+        subset: v1
+      weight: 10

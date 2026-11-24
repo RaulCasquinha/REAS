@@ -1,0 +1,10 @@
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: frontend-lb-lc
+  namespace: default
+spec:
+  host: frontend
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_REQUEST # Previously LEAST_CONN, now LEAST_REQUEST in newer Istio
