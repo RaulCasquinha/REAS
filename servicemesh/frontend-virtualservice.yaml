@@ -13,11 +13,11 @@ spec:
     - destination:
         host: frontend
         subset: v1
-      weight: 0
+      weight: 90
     - destination:
         host: frontend
         subset: v2
-      weight: 100
+      weight: 10
 ---
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -34,8 +34,8 @@ spec:
     - destination:
         host: frontend
         subset: v1
-      weight: 0
+      weight: 90
     - destination:
         host: frontend
         subset: v2
-      weight: 100
+      weight: 10
