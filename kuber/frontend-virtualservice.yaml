@@ -1,0 +1,41 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: frontend-external
+  namespace: default
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - frontend-gateway
+  http:
+  - route:
+    - destination:
+        host: frontend
+        subset: v1
+      weight: 0
+    - destination:
+        host: frontend
+        subset: v2
+      weight: 100
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: frontend-mesh
+  namespace: default
+spec:
+  hosts:
+  - frontend
+  gateways:
+  - mesh
+  http:
+  - route:
+    - destination:
+        host: frontend
+        subset: v1
+      weight: 0
+    - destination:
+        host: frontend
+        subset: v2
+      weight: 100

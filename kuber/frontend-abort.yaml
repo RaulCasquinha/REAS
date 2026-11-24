@@ -1,0 +1,19 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: frontend-mesh
+  namespace: default
+spec:
+  hosts:
+  - frontend
+  gateways:
+  - mesh
+  http:
+  - fault:
+      abort:
+        percentage:
+          value: 30
+          httpStatus: 503
+    route:
+    - destination:
+        host: frontend
