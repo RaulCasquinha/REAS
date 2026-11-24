@@ -109,15 +109,186 @@ Boa noite
 
 \section{Introduction}
 
+This report covers the Container Orchestration and Service Mesh chapters of the REAS Web
+Performance Project (full brief in \texttt{docs/work/work\_instructions.md}). Both chapters deploy
+the Google Online Boutique microservices demo (11 services) on a local Minikube cluster and
+progressively add operational capabilities: first native Kubernetes features (manual/auto scaling,
+rolling updates, service discovery, self-healing), then an Istio service mesh layered on top
+(traffic management, mTLS security, observability, fault injection, circuit breaking).
+
+The Kubernetes chapter was fully executed and logged; the automation script and raw command
+output live in \texttt{kuber/} (\texttt{run-lab.sh} plus timestamped \texttt{lab\_output\_*.log}
+files). All figures in Section~\ref{sec:k8s-results} are taken from the complete run,
+\texttt{lab\_output\_20261102\_170604.log}. The Service Mesh chapter's automation
+(\texttt{servicemesh/run-lab.sh}) has been written to mirror the Istio chapter of the brief
+step-for-step, but has not yet been executed against a live cluster — Section~\ref{sec:mesh-results}
+documents what the script covers and what remains pending.
+
 \section{State of the Art}
 
 \section{Methodology}
 
+Kubernetes experiments were automated with \texttt{kuber/run-lab.sh}: a bash script that walks
+through 11 numbered stages (cluster start, Online Boutique deployment, exploration, ingress,
+metrics, manual scaling, HPA, load-generator experiments, rolling update/rollback, health checks,
+service discovery), \texttt{tee}-ing every command and its output to a timestamped log file so
+runs are fully reproducible and auditable. The canonical run used for this report is
+\texttt{lab\_output\_20261102\_170604.log} — the only one of the 11 captured runs that completes
+all 11 stages without being interrupted (earlier runs failed on Docker-daemon/minikube startup
+races or were stopped mid-way while iterating on the ingress/iptables setup).
+
+The same pattern (helper-driven, logged, group-number-parameterized script) was used to write
+\texttt{servicemesh/run-lab.sh} for the Istio chapter, so that once executed it produces directly
+comparable, reproducible logs for the report.
+
 \section{Results}
+
+\subsection{Kubernetes}
+\label{sec:k8s-results}
+
+\subsubsection{Architecture}
+
+The cluster is a single-node Minikube instance (\texttt{--driver=docker --cpus=4 --memory=8192},
+Kubernetes v1.37.0) running the Google Online Boutique application in the \texttt{default}
+namespace: 11 microservices (frontend, productcatalogservice, cartservice, currencyservice,
+paymentservice, shippingservice, checkoutservice, emailservice, recommendationservice,
+adservice) plus the \texttt{redis-cart} cache and the built-in \texttt{loadgenerator}. Each service
+is deployed via a \texttt{Deployment} + \texttt{Service} pair from the upstream manifests
+(\texttt{release/kubernetes-manifests.yaml}); \texttt{frontend} is exposed both internally
+(\texttt{ClusterIP}, port 80 → 8080) and externally via \texttt{frontend-external}
+(\texttt{LoadBalancer}, which Minikube resolves to a NodePort).
+
+\subsubsection{Manifests}
+
+\texttt{currencyservice} runs with explicit resource requests/limits (100m/200m CPU,
+64Mi/128Mi memory) and a gRPC liveness/readiness probe on port 7000 — these requests are what
+make the HPA (Section~\ref{sec:hpa}) possible, since HPA computes CPU utilization as a percentage
+of the \emph{requested} amount. \texttt{frontend} uses an HTTP \texttt{\_healthz} probe on port
+8080 and the same resource envelope. The \texttt{boutique-ingress.yaml} manifest
+(\texttt{kuber/boutique-ingress.yaml}) routes \texttt{reas-g04.dyn.fil.isel.pt} to the
+\texttt{frontend} service through the Nginx ingress controller addon.
+
+\subsubsection{Scaling experiments}
+
+Manual scaling of \texttt{frontend} (1 → 3 → 5 → 1 replicas) was confirmed via Kubernetes events
+(\texttt{ScalingReplicaSet ... from 1 to 3}, \texttt{from 3 to 5}, \texttt{from 5 to 1}) and
+\texttt{kubectl wait} succeeding for every new pod at each step. \textbf{Caveat:} the
+\texttt{kubectl top pods -l app=frontend} readings captured immediately after each scale-up only
+ever show the original pod — this is a metrics-server propagation lag (new pods' metrics hadn't
+been scraped yet in the few seconds between the scale command and the \texttt{top} call), not a
+real single-pod bottleneck. This specific measurement should not be read as evidence of load
+distribution across replicas; the scale events themselves are the reliable signal here.
+
+\subsubsection{Horizontal Pod Autoscaler}
+\label{sec:hpa}
+
+\texttt{currencyservice-hpa} (min 1 / max 5 replicas, target 50\% average CPU utilization) was
+exercised by ramping the built-in load generator through \texttt{USERS} = 10, 50, 100, 200, each
+held for 2 minutes:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+USERS & HPA CPU (current/target) & currencyservice replicas & Load generator req/s \\
+\midrule
+10  & 14\%/50\% & 1 & 2.2 \\
+50  & 45\%/50\% & 1 & 10.2 \\
+100 & 67\%/50\% & 1 → 2 (scale-up observed) & 22.4 \\
+200 & 33\%/50\% (post scale-up), later 50\%/50\% at 2 replicas & 2 & 28.0 \\
+\bottomrule
+\end{tabular}
+\caption{HPA behaviour and Locust throughput per load level (0\% request failures throughout).}
+\end{table}
+
+The scale-up from 1 to 2 replicas was triggered around the USERS=100→200 transition, once
+sustained CPU crossed the 50\% target (67\% observed at USERS=100 already exceeded target, and
+the new pod \texttt{currencyservice-d49b9844d-nqch7} appears moments later). After scaling, CPU
+dropped to 33\% (load now spread over 2 pods) and climbed back toward the 50\% target under
+sustained USERS=200 load during a 60-second watch window. No flapping (rapid scale up/down) was
+observed in this run — the single scale-up event was stable for the remainder of the experiment,
+consistent with HPA's default stabilization window damping reactions to transient spikes.
+
+\subsubsection{Rolling update and rollback}
+
+\texttt{frontend} was rolled from \texttt{v0.10.4} (revision 1) to \texttt{v0.10.2} (revision 2) via
+\texttt{kubectl set image}; \texttt{kubectl rollout status} reported a brief
+``1 old replicas pending termination'' before ``successfully rolled out'', i.e. a zero-downtime
+rolling replacement. \texttt{kubectl rollout undo} then reverted to \texttt{v0.10.4} as revision 3,
+again completing with ``successfully rolled out''. Revision numbers increased monotonically
+(1 → 2 → 3) as expected, confirming Kubernetes never reuses a revision number even on rollback.
+
+\subsubsection{Operational capabilities}
+
+\textbf{Self-healing:} during the initial deployment, most services' readiness/liveness probes
+failed transiently (``\texttt{Readiness probe failed: timeout: failed to connect ... within 1s}'')
+while container images were still pulling or the application hadn't finished starting; every
+service recovered to \texttt{1/1 Running} once the process was actually listening, with no manual
+intervention. \textbf{Service discovery:} \texttt{kubectl exec ... redis-cart -- nslookup
+productcatalogservice} successfully resolved \texttt{productcatalogservice.default.svc.cluster.local}
+to its ClusterIP (\texttt{10.110.139.60}) via CoreDNS — the preceding NXDOMAIN lines are just the
+shell's DNS search-domain probing of shorter names and not a discovery failure.
+
+\subsubsection{Kubernetes vs Docker Compose}
+
+Compose requires each scaling/health/update decision to be issued and monitored manually (or
+scripted externally); Kubernetes expresses the desired state declaratively and reconciles
+continuously — the HPA and rolling-update behaviour above happened without any component being
+told \emph{how}, only \emph{what} the end state should be. The trade-off is operational complexity:
+a single-node Compose stack has no scheduler, no service discovery beyond container names, and
+no built-in health-driven restart loop, but it is far simpler to reason about and run for a small,
+single-host deployment. Kubernetes' overhead (cluster control plane, YAML manifests, learning
+curve) is only justified once an application needs the scaling, self-healing, or multi-service
+operability demonstrated here — for a single WordPress-sized workload, Compose remains the more
+proportionate choice.
+
+\subsection{Service Mesh}
+\label{sec:mesh-results}
+
+\textbf{Status: pending execution.} No Istio installation has been run against the cluster yet, so
+this subsection documents the automation built for this chapter rather than captured results — no
+numbers from this section are fabricated.
+
+\texttt{servicemesh/run-lab.sh} (with matching \texttt{README.md}/\texttt{README-nixos.md}/
+\texttt{shell.nix}) mirrors \texttt{kuber/run-lab.sh}'s structure and automates the full Istio
+chapter of the brief in 8 stages: (1) Istio install (\texttt{profile=demo}) and sidecar-injection
+verification; (2) restarting Online Boutique deployments to confirm 2/2 (app + \texttt{istio-proxy})
+pods; (3) external access via \texttt{frontend-gateway.yaml} (Istio \texttt{Gateway} +
+\texttt{VirtualService}), replacing the Nginx ingress forwarding used in the Kubernetes chapter;
+(4) the Grafana/Prometheus/Jaeger/Kiali observability add-ons, including registering the Jaeger
+tracing provider; (5) traffic management — least-request load balancing on \texttt{currencyservice}
+(\texttt{currencyservice-lb.yaml}) and a canary \texttt{frontend} v1/v2 deployment stepped through
+90/10 → 50/50 → 100/0 traffic splits; (6) mTLS (PERMISSIVE → STRICT) and an
+\texttt{AuthorizationPolicy} restricting \texttt{productcatalogservice} access to \texttt{frontend}
+only; (7) fault injection (5s delay on 50\% of \texttt{currencyservice} calls, 503 abort on 30\% of
+mesh-internal \texttt{frontend} traffic) and an aggressive \texttt{frontend} circuit breaker
+triggered under resource starvation + \texttt{USERS=200} load; (8) performance-overhead capture
+(\texttt{kubectl top pods --containers}, Istio control-plane cost, and the Grafana PromQL queries
+needed to compare PERMISSIVE vs STRICT mTLS latency).
+
+Once run on the lab VM, this script will produce a \texttt{lab\_output\_*.log} analogous to the
+Kubernetes chapter's, from which the sidecar-overhead, mTLS-latency, canary-split, and
+circuit-breaker numbers required by the assignment brief can be extracted and reported here.
 
 \section{Discussion}
 
 \section{Conclusion}
+
+The Kubernetes chapter is complete: the automated, logged run
+(\texttt{kuber/lab\_output\_20261102\_170604.log}) demonstrates manual scaling, a working HPA
+scale-up under load, zero-downtime rolling update/rollback, self-healing during startup, and
+DNS-based service discovery — all without any manual orchestration beyond issuing the declarative
+commands themselves. The one caveat worth flagging for anyone re-running this lab is the
+metrics-server lag on \texttt{kubectl top} immediately after a scale event; waiting a few seconds
+before reading per-pod metrics avoids misreading it as a load-distribution problem.
+
+The Service Mesh chapter is not yet executed, but is no longer unscoped: \texttt{servicemesh/run-lab.sh}
+encodes every step of the Istio chapter end-to-end, so running it is now a mechanical step that
+will directly produce the traffic-management, security, observability, fault-injection, and
+performance-overhead evidence the brief asks for. The main open question to answer once that run
+exists is the same one the brief poses explicitly — whether, for an application of Online Boutique's
+size, the added operational complexity of a service mesh is justified by the traffic-management and
+security gains over what plain Kubernetes Services already provide.
 %\printbibliography[title={Referências}]
 
 

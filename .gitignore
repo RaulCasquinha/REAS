@@ -329,3 +329,6 @@ TSWLatexianTemp*
 # option is specified. Footnotes are the stored in a file with suffix Notes.bib.
 # Uncomment the next line to have this generated file ignored.
 #*Notes.bib
+
+## REAS wordpress lab: the currently-applied config, not a template to keep
+wordpress/active/
